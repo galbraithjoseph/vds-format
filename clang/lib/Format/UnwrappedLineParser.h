@@ -161,11 +161,16 @@ private:
   void parseSquare(bool SkipLambda = false);
   void keepAncestorBraces();
   void parseUnbracedBody(bool CheckEOF = false);
+  bool singleStatementBracePolicy() const;
+  bool
+  policyConditionIsWrapped(const UnwrappedLine *ParsedLine = nullptr) const;
   void handleAttributes();
   bool handleCppAttributes();
   bool isBlockBegin(const FormatToken &Tok) const;
-  FormatToken *parseIfThenElse(IfStmtKind *IfKind, bool KeepBraces = false,
-                               bool IsVerilogAssert = false);
+  FormatToken *
+  parseIfThenElse(IfStmtKind *IfKind, bool KeepBraces = false,
+                  bool IsVerilogAssert = false,
+                  SmallVectorImpl<FormatToken *> *BraceChain = nullptr);
   void parseTryCatch();
   void parseLoopBody(bool KeepBraces, bool WrapRightBrace);
   void parseForOrWhileLoop(bool HasParens = true);

@@ -11,11 +11,14 @@ wait();
 }
 }
 
-// A multi-statement branch does not cause insertion in an unbraced else.
+// A multi-statement branch requires braces throughout the chain.
 void mixedBranches(bool ready){if(ready){prepare();run();}else wait();}
 
-// A wrapped condition does not cause insertion of missing braces.
+// A wrapped condition requires braces around both single-statement bodies.
 void wrappedCondition(){if(firstLongReadinessConditionIsSatisfied()&&secondLongReadinessConditionIsSatisfied())run();else wait();}
+
+// The chain decision includes all else-if branches, including mixed input.
+void chained(bool ready,bool retry){if(ready)run();else if(retry){prepare();run();}else wait();}
 
 // Spacing after ! and inside while parentheses.
 void polling(bool bStopped){while(!bStopped){run();bStopped=true;}}

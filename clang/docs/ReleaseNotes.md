@@ -1382,6 +1382,11 @@ documentation](CIR/index.md) for more information regarding ClangIR's status and
 
 ### clang-format
 
+- Add `ControlStatementBraces` with `Mode`, `IfChain`, and `WrappedCondition`
+  settings to insert braces or remove safe single-statement braces, keep if
+  chains consistent, and require braces for formatted multiline conditions.
+  The default preserves existing behavior.
+
 - Add `SpacesInBlockComments` option to control spacing after `/*` and
   before `*/` in ordinary block comments.
 - Add `AfterRequiresExpression` sub-option of `BraceWrapping` to wrap the

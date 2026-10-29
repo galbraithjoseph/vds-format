@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the stock formatting fixture without modifying any files."""
+"""Check the personal-style formatting fixture without modifying any files."""
 
 import argparse
 import difflib
@@ -11,7 +11,7 @@ import sys
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--clang-format", default="clang-format",
-                        help="clang-format executable (baseline: 17.0.6)")
+                        help="clang-format executable built from this fork")
     args = parser.parse_args()
     directory = Path(__file__).resolve().parent
 

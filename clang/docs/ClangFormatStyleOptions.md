@@ -4281,6 +4281,88 @@ the configuration (without a prefix: `Auto`).
       arg);
   ```
 
+(controlstatementbraces)=
+
+**ControlStatementBraces** (`ControlStatementBracesStyle`) {versionbadge}`clang-format 24` {ref}`¶ <ControlStatementBraces>`
+
+: Configure brace presence for C, C++, and Objective-C if, for, while, and
+  do statements. Defaults to Mode: Leave, IfChain: Independent, and
+  WrappedCondition: Ignore. Other languages are unaffected.
+
+  Brace placement is still controlled by BreakBeforeBraces/BraceWrapping.
+  IfChain and WrappedCondition apply only to SingleStatement. Consistent
+  retains braces throughout an if/else-if/else chain when any branch has
+  multiple statements, a wrapped condition (with Require), or braces needed
+  for safety. Else-if remains an else-if, without a synthetic else block.
+  A single statement spanning several formatted lines is still one
+  statement.
+
+  Conditions include initializers and are checked after formatting a
+  canonical braced representation. This gives the same result for mixed,
+  braced, and unbraced input and prevents oscillation near ColumnLimit.
+  With attached braces, a brace that forces a condition to wrap is retained.
+
+  Empty compound bodies and null-statement bodies are preserved. Comments,
+  attributes, preprocessor boundaries, and potentially dangling else clauses
+  can prevent removal. As with other brace transformations, the formatter
+  lacks complete semantic information; review the resulting changes.
+  For range formatting (including paste), preserve brace presence if the
+  policy would change braces outside the requested ranges. This avoids
+  splitting a brace pair when an editor applies only in-range edits.
+  An active policy cannot be combined with InsertBraces or RemoveBracesLLVM.
+
+  ```yaml
+  ControlStatementBraces:
+    Mode: SingleStatement
+    IfChain: Consistent
+    WrappedCondition: Require
+  BreakBeforeBraces: Allman
+  ```
+
+  Nested configuration flags:
+
+  Brace-presence policy for C and C++ control statements.
+
+  - `ModeStyle Mode`
+    Whether to preserve, insert, or selectively remove braces.
+
+    Possible values:
+
+    - `Leave` (in configuration: `Leave`)
+      Preserve brace presence (the default).
+
+    - `Always` (in configuration: `Always`)
+      Insert braces around nonempty control-statement bodies.
+
+    - `SingleStatement` (in configuration: `SingleStatement`)
+      Remove safe optional braces from single-statement bodies.
+
+
+  - `IfChainStyle IfChain`
+    Whether branches of an if chain share the brace decision.
+
+    Possible values:
+
+    - `Independent` (in configuration: `Independent`)
+      Decide separately for each branch.
+
+    - `Consistent` (in configuration: `Consistent`)
+      Retain braces throughout a chain if any branch requires them.
+
+
+  - `WrappedConditionStyle WrappedCondition`
+    Whether a wrapped condition requires braces.
+
+    Possible values:
+
+    - `Ignore` (in configuration: `Ignore`)
+      Do not use condition wrapping to decide brace presence.
+
+    - `Require` (in configuration: `Require`)
+      Require braces when the formatted condition occupies multiple lines.
+
+
+
 (cpp11bracedliststyle)=
 
 **Cpp11BracedListStyle** (`BracedListStyle`) {versionbadge}`clang-format 3.4` {ref}`¶ <Cpp11BracedListStyle>`

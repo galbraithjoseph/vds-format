@@ -36,7 +36,8 @@ enum class ParseError {
   InvalidQualifierSpecified,
   DuplicateQualifierSpecified,
   MissingQualifierType,
-  MissingQualifierOrder
+  MissingQualifierOrder,
+  ControlStatementBracesConflict
 };
 class ParseErrorCategory final : public std::error_category {
 public:
@@ -49,6 +50,81 @@ std::error_code make_error_code(ParseError e);
 /// The `FormatStyle` is used to configure the formatting to follow
 /// specific guidelines.
 struct FormatStyle {
+  /// Brace-presence policy for C and C++ control statements.
+  struct ControlStatementBracesStyle {
+    /// Supported brace-presence modes.
+    enum ModeStyle : int8_t {
+      /// Preserve brace presence (the default).
+      Leave,
+      /// Insert braces around nonempty control-statement bodies.
+      Always,
+      /// Remove safe optional braces from single-statement bodies.
+      SingleStatement
+    };
+    /// Supported if-chain policies.
+    enum IfChainStyle : int8_t {
+      /// Decide separately for each branch.
+      Independent,
+      /// Retain braces throughout a chain if any branch requires them.
+      Consistent
+    };
+    /// Supported wrapped-condition policies.
+    enum WrappedConditionStyle : int8_t {
+      /// Do not use condition wrapping to decide brace presence.
+      Ignore,
+      /// Require braces when the formatted condition occupies multiple lines.
+      Require
+    };
+
+    /// Whether to preserve, insert, or selectively remove braces.
+    ModeStyle Mode;
+    /// Whether branches of an if chain share the brace decision.
+    IfChainStyle IfChain;
+    /// Whether a wrapped condition requires braces.
+    WrappedConditionStyle WrappedCondition;
+
+    bool operator==(const ControlStatementBracesStyle &R) const {
+      return Mode == R.Mode && IfChain == R.IfChain &&
+             WrappedCondition == R.WrappedCondition;
+    }
+  };
+
+  /// Configure brace presence for C, C++, and Objective-C if, for, while, and
+  /// do statements. Defaults to Mode: Leave, IfChain: Independent, and
+  /// WrappedCondition: Ignore. Other languages are unaffected.
+  ///
+  /// Brace placement is still controlled by BreakBeforeBraces/BraceWrapping.
+  /// IfChain and WrappedCondition apply only to SingleStatement. Consistent
+  /// retains braces throughout an if/else-if/else chain when any branch has
+  /// multiple statements, a wrapped condition (with Require), or braces needed
+  /// for safety. Else-if remains an else-if, without a synthetic else block.
+  /// A single statement spanning several formatted lines is still one
+  /// statement.
+  ///
+  /// Conditions include initializers and are checked after formatting a
+  /// canonical braced representation. This gives the same result for mixed,
+  /// braced, and unbraced input and prevents oscillation near ColumnLimit.
+  /// With attached braces, a brace that forces a condition to wrap is retained.
+  ///
+  /// Empty compound bodies and null-statement bodies are preserved. Comments,
+  /// attributes, preprocessor boundaries, and potentially dangling else clauses
+  /// can prevent removal. As with other brace transformations, the formatter
+  /// lacks complete semantic information; review the resulting changes.
+  /// For range formatting (including paste), preserve brace presence if the
+  /// policy would change braces outside the requested ranges. This avoids
+  /// splitting a brace pair when an editor applies only in-range edits.
+  /// An active policy cannot be combined with InsertBraces or RemoveBracesLLVM.
+  ///
+  /// \code{.yaml}
+  ///   ControlStatementBraces:
+  ///     Mode: SingleStatement
+  ///     IfChain: Consistent
+  ///     WrappedCondition: Require
+  ///   BreakBeforeBraces: Allman
+  /// \endcode
+  /// \version 24
+  ControlStatementBracesStyle ControlStatementBraces;
+
   // If the BasedOn: was InheritParentConfig and this style needs the file from
   // the parent directories. It is not part of the actual style for formatting.
   // Thus the // instead of ///.
@@ -6179,6 +6255,8 @@ struct FormatStyle {
   WrapNamespaceBodyWithEmptyLinesStyle WrapNamespaceBodyWithEmptyLines;
 
   bool operator==(const FormatStyle &R) const {
+    if (!(ControlStatementBraces == R.ControlStatementBraces))
+      return false;
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignAfterOpenBracket == R.AlignAfterOpenBracket &&
            AlignArrayOfStructures == R.AlignArrayOfStructures &&

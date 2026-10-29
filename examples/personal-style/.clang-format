@@ -1,4 +1,4 @@
-# Stock baseline for issue #1. See README.md for unsupported requirements.
+# Personal style using the brace-policy extension from issue #2.
 BasedOnStyle: LLVM
 Language: Cpp
 ColumnLimit: 80
@@ -15,5 +15,9 @@ SpacesInParensOptions:
   InEmptyParentheses: false
   Other: false
 SpaceAfterLogicalNot: true
-RemoveBracesLLVM: true
+ControlStatementBraces:
+  Mode: SingleStatement
+  IfChain: Consistent
+  WrappedCondition: Require
+RemoveBracesLLVM: false
 InsertBraces: false

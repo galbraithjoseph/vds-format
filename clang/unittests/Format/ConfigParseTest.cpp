@@ -74,6 +74,62 @@ TEST(ConfigParseTest, GetsPredefinedStyleByName) {
   EXPECT_FALSE(getPredefinedStyle("qwerty", FormatStyle::LK_Cpp, &Styles[0]));
 }
 
+TEST(ConfigParseTest, ControlStatementBraces) {
+  using Policy = FormatStyle::ControlStatementBracesStyle;
+  auto Style = getLLVMStyle();
+  EXPECT_EQ(Policy::Leave, Style.ControlStatementBraces.Mode);
+  EXPECT_EQ(Policy::Independent, Style.ControlStatementBraces.IfChain);
+  EXPECT_EQ(Policy::Ignore, Style.ControlStatementBraces.WrappedCondition);
+  EXPECT_EQ(
+      0, parseConfiguration("ControlStatementBraces: {Mode: SingleStatement, "
+                            "IfChain: Consistent, WrappedCondition: Require}",
+                            &Style)
+             .value());
+  EXPECT_EQ(Policy::SingleStatement, Style.ControlStatementBraces.Mode);
+  EXPECT_EQ(Policy::Consistent, Style.ControlStatementBraces.IfChain);
+  EXPECT_EQ(Policy::Require, Style.ControlStatementBraces.WrappedCondition);
+  auto RoundTrip = getLLVMStyle();
+  EXPECT_EQ(0,
+            parseConfiguration(configurationAsText(Style), &RoundTrip).value());
+  EXPECT_EQ(Style, RoundTrip);
+  auto Different = Style;
+  Different.ControlStatementBraces.IfChain = Policy::Independent;
+  EXPECT_FALSE(Style == Different);
+  for (StringRef Mode : {"Leave", "Always", "SingleStatement"}) {
+    auto S = getLLVMStyle();
+    EXPECT_EQ(0, parseConfiguration(
+                     ("ControlStatementBraces: {Mode: " + Mode + "}").str(), &S)
+                     .value());
+  }
+  for (StringRef Config :
+       {"ControlStatementBraces: {Mode: Invalid}",
+        "ControlStatementBraces: {IfChain: Invalid}",
+        "ControlStatementBraces: {WrappedCondition: Invalid}"}) {
+    auto S = getLLVMStyle();
+    EXPECT_NE(0, parseConfiguration(llvm::MemoryBufferRef(Config, "YAML"), &S,
+                                    false, dropDiagnosticHandler)
+                     .value());
+  }
+  for (StringRef Mode : {"Always", "SingleStatement"}) {
+    for (StringRef OldOption : {"InsertBraces", "RemoveBracesLLVM"}) {
+      auto S = getLLVMStyle();
+      EXPECT_EQ(make_error_code(ParseError::ControlStatementBracesConflict),
+                parseConfiguration(("ControlStatementBraces: {Mode: " + Mode +
+                                    "}\n" + OldOption + ": true")
+                                       .str(),
+                                   &S));
+    }
+  }
+  // Inactive policy fields do not conflict with legacy options.
+  auto S = getLLVMStyle();
+  EXPECT_EQ(
+      0, parseConfiguration("ControlStatementBraces: {Mode: Leave, "
+                            "IfChain: Consistent, WrappedCondition: Require}\n"
+                            "RemoveBracesLLVM: true",
+                            &S)
+             .value());
+}
+
 TEST(ConfigParseTest, GetsCorrectBasedOnStyle) {
   SmallVector<FormatStyle, 8> Styles;
   Styles.resize(2);
