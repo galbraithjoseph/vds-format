@@ -1,0 +1,19 @@
+# Stock baseline for issue #1. See README.md for unsupported requirements.
+BasedOnStyle: LLVM
+Language: Cpp
+ColumnLimit: 80
+BreakBeforeBraces: Allman
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+SpaceBeforeParens: ControlStatements
+SpacesInParens: Custom
+SpacesInParensOptions:
+  InConditionalStatements: true
+  InCStyleCasts: false
+  InEmptyParentheses: false
+  Other: false
+SpaceAfterLogicalNot: true
+RemoveBracesLLVM: true
+InsertBraces: false
