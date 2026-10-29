@@ -24,115 +24,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
-#include "llvm/Support/JSON.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include <fstream>
 
 using namespace llvm;
 using clang::tooling::Replacements;
-
-// Temporary editor-integration diagnostics. Only D:/src requests are captured;
-// each invocation gets its own directory so simultaneous editors cannot mix
-// logs.
-static std::vector<std::string> InvocationArguments;
-
-class EditorTrace {
-  SmallString<256> Directory;
-
-public:
-  EditorTrace(StringRef FileName, StringRef Code) {
-    SmallString<256> Path(FileName);
-    if (sys::fs::make_absolute(Path))
-      return;
-    sys::path::remove_dots(Path, /*remove_dot_dot=*/true);
-    if (!StringRef(sys::path::convert_to_slash(Path))
-             .starts_with_insensitive("d:/src/"))
-      return;
-    constexpr StringLiteral Root("D:/src/vds-format/build/clang-format-logs");
-    if (sys::fs::create_directories(Root) ||
-        sys::fs::createUniqueDirectory(Twine(Root) + "/request", Directory)) {
-      Directory.clear();
-      errs()
-          << "clang-format: could not create troubleshooting log directory\n";
-      return;
-    }
-    write("input.cpp", Code);
-  }
-
-  explicit operator bool() const { return !Directory.empty(); }
-
-  void write(StringRef Name, StringRef Text) const {
-    if (!*this)
-      return;
-    SmallString<256> Path(Directory);
-    sys::path::append(Path, Name);
-    std::error_code EC;
-    raw_fd_ostream OS(Path, EC, sys::fs::OF_None);
-    if (!EC)
-      OS << Text;
-  }
-
-  void writeJSON(StringRef Name, json::Object Object) const {
-    std::string Text;
-    raw_string_ostream OS(Text);
-    OS << json::Value(std::move(Object)) << '\n';
-    write(Name, Text);
-  }
-
-  static json::Array ranges(ArrayRef<clang::tooling::Range> Ranges) {
-    json::Array Result;
-    for (const auto &Range : Ranges)
-      Result.push_back(json::Object{{"offset", Range.getOffset()},
-                                    {"length", Range.getLength()}});
-    return Result;
-  }
-
-  void request(StringRef FileName, ArrayRef<clang::tooling::Range> Ranges,
-               StringRef Style, StringRef FallbackStyle, bool OutputXML,
-               bool Inplace, unsigned Cursor, bool HasCursor) const {
-    SmallString<256> CWD;
-    (void)sys::fs::current_path(CWD);
-    json::Array Arguments;
-    for (const auto &Argument : InvocationArguments)
-      Arguments.push_back(Argument);
-    writeJSON("request.json",
-              json::Object{{"version", clang::getClangFullVersion()},
-                           {"pid", int64_t(sys::Process::getProcessId())},
-                           {"arguments", std::move(Arguments)},
-                           {"working_directory", StringRef(CWD)},
-                           {"assumed_filename", FileName},
-                           {"ranges", ranges(Ranges)},
-                           {"style", Style},
-                           {"fallback_style", FallbackStyle},
-                           {"output_xml", OutputXML},
-                           {"inplace", Inplace},
-                           {"cursor", Cursor},
-                           {"has_cursor", HasCursor}});
-  }
-
-  void result(StringRef Code, const Replacements &Replaces,
-              const clang::format::FormattingAttemptStatus &Status,
-              ArrayRef<clang::tooling::Range> Ranges) const {
-    json::Array Edits;
-    for (const auto &Replace : Replaces)
-      Edits.push_back(json::Object{
-          {"offset", Replace.getOffset()},
-          {"length", Replace.getLength()},
-          {"text", Replace.getReplacementText()},
-          {"removed", Code.substr(Replace.getOffset(), Replace.getLength())}});
-    writeJSON("result.json",
-              json::Object{{"format_complete", Status.FormatComplete},
-                           {"ranges_after_includes", ranges(Ranges)},
-                           {"replacements", std::move(Edits)}});
-    auto Formatted = clang::tooling::applyAllReplacements(Code, Replaces);
-    if (Formatted)
-      write("formatted.cpp", *Formatted);
-    else
-      write("error.txt", toString(Formatted.takeError()));
-  }
-};
 
 // Mark all our options with this category, everything else (except for -version
 // and -help) will be hidden.
@@ -574,7 +471,6 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
 
   StringRef BufStr = Code->getBuffer();
   StringRef AssumedFileName = IsSTDIN ? AssumeFileName : FileName;
-  EditorTrace Trace(AssumedFileName, BufStr);
 
   const char *InvalidBOM = SrcMgr::ContentCache::getInvalidBOM(BufStr);
 
@@ -590,9 +486,6 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
   std::vector<tooling::Range> Ranges;
   if (fillRanges(Code.get(), Ranges))
     return true;
-  if (Trace)
-    Trace.request(AssumedFileName, Ranges, Style, FallbackStyle, OutputXML,
-                  Inplace, Cursor, Cursor.getNumOccurrences() != 0);
   if (AssumedFileName.empty()) {
     llvm::errs() << "error: empty filenames are not allowed\n";
     return true;
@@ -602,9 +495,7 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
       getStyle(Style, AssumedFileName, FallbackStyle, Code->getBuffer(),
                nullptr, is_contained(WNoErrorList, WNoError::Unknown));
   if (!FormatStyle) {
-    const std::string Message = toString(FormatStyle.takeError());
-    Trace.write("error.txt", Message);
-    llvm::errs() << Message << "\n";
+    llvm::errs() << toString(FormatStyle.takeError()) << "\n";
     return true;
   }
 
@@ -634,8 +525,6 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
     if (SortIncludes)
       FormatStyle->SortIncludes.Enabled = true;
   }
-  if (Trace)
-    Trace.write("style.yaml", configurationAsText(*FormatStyle));
   unsigned CursorPosition = Cursor;
   const auto RequestedRanges = Ranges;
   Replacements Replaces = sortIncludes(*FormatStyle, Code->getBuffer(), Ranges,
@@ -667,8 +556,6 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
       FormatStyle::ControlStatementBracesStyle::Leave)
     Replaces =
         splitBraceRemovalEdits(Code->getBuffer(), Replaces, RequestedRanges);
-  if (Trace)
-    Trace.result(Code->getBuffer(), Replaces, Status, Ranges);
   if (DryRun) {
     return Replaces.size() > (IsJson ? 1u : 0u) &&
            emitReplacementWarnings(Replaces, AssumedFileName, std::move(Code));
@@ -834,7 +721,6 @@ static bool isIgnored(StringRef FilePath) {
 
 int main(int argc, const char **argv) {
   InitLLVM X(argc, argv);
-  InvocationArguments.assign(argv, argv + argc);
 
   cl::HideUnrelatedOptions(ClangFormatCategory);
 

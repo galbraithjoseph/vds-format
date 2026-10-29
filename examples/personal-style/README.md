@@ -92,23 +92,3 @@ The previous stock-only baseline from #1 was verified with clang-format 17.0.6
 and 23.1.3. Its `RemoveBracesLLVM` approximation left single-statement branches
 unbraced beside multi-statement branches and did not add braces for wrapped
 conditions. The current fixtures exercise the implemented policy instead.
-
-## Temporary editor troubleshooting logs
-
-This troubleshooting build always logs formatting requests whose target file
-resolves beneath `D:/src`. Other target directories are not logged. Each request
-gets a unique folder under `D:/src/vds-format/build/clang-format-logs` containing:
-
-- `request.json`: executable arguments, working directory, assumed source path,
-  byte ranges, cursor, and output mode.
-- `input.cpp`: the exact source buffer supplied to clang-format, including line
-  endings and incomplete edits made while typing.
-- `style.yaml`: the resolved formatting configuration.
-- `result.json`: formatting status and replacements, including deleted and
-  inserted source text.
-- `formatted.cpp`: the result of applying those replacements to the input.
-
-The files stay local in the ignored build directory. Logging does not change
-the formatter's stdout/XML protocol. Restart the editor after replacing the
-executable, reproduce the edit, and inspect the newest request folders. An
-`error.txt` records configuration or replacement errors when applicable.
