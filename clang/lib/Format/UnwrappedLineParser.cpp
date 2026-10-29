@@ -360,7 +360,8 @@ bool UnwrappedLineParser::parseLevel(const FormatToken *OpeningBrace,
   const bool InRequiresExpression =
       OpeningBrace && OpeningBrace->is(TT_RequiresExpressionLBrace);
   const bool IsPrecededByCommentOrPPDirective =
-      !Style.RemoveBracesLLVM || precededByCommentOrPPDirective();
+      !(Style.RemoveBracesLLVM || singleStatementBracePolicy()) ||
+      precededByCommentOrPPDirective();
   FormatToken *IfLBrace = nullptr;
   bool HasDoWhile = false;
   bool HasLabel = false;
@@ -427,7 +428,8 @@ bool UnwrappedLineParser::parseLevel(const FormatToken *OpeningBrace,
       break;
     case tok::r_brace:
       if (OpeningBrace) {
-        if (!Style.RemoveBracesLLVM || Line->InPPDirective ||
+        if (!(Style.RemoveBracesLLVM || singleStatementBracePolicy()) ||
+            Line->InPPDirective ||
             OpeningBrace->isNoneOf(TT_ControlStatementLBrace, TT_ElseLBrace)) {
           return false;
         }
@@ -867,6 +869,40 @@ FormatToken *UnwrappedLineParser::parseBlock(
     const bool WrappedOpeningBrace = !Tok->Previous;
     if (WrappedOpeningBrace && FollowedByComment)
       return false;
+    if (singleStatementBracePolicy()) {
+      // Statement count, not the number of formatted body lines, determines
+      // eligibility. Never cross directives, comments, or disabled regions.
+      if (KeepBraces || PPStartHash != computePPHash() ||
+          OpeningLineIndex == UnwrappedLine::kInvalidIndex) {
+        return false;
+      }
+      // Flattening else { if (...) ... } merges two chains. If the inner
+      // chain needs braces, keep this scope so that a later invocation does
+      // not discover a new consistency requirement for the outer chain.
+      if (Tok->is(TT_ElseLBrace) && IfLBrace && !IfLBrace->Optional &&
+          Style.ControlStatementBraces.IfChain ==
+              FormatStyle::ControlStatementBracesStyle::Consistent) {
+        return false;
+      }
+      for (size_t I = OpeningLineIndex; I < CurrentLines->size(); ++I) {
+        const auto &L = (*CurrentLines)[I];
+        if (L.InPPDirective || L.InMacroBody || L.InMacroExpansion)
+          return false;
+        for (const auto &Node : L.Tokens) {
+          if (Node.Tok->Finalized || Node.Tok->FirstAfterPPLine ||
+              Node.Tok->is(tok::comment)) {
+            return false;
+          }
+          // An unmatched if may be hidden inside a loop body. Conservatively
+          // retain the enclosing scope unless it is a complete if/else.
+          if (Node.Tok->is(tok::kw_if) &&
+              (!IfKind || *IfKind != IfStmtKind::IfElse)) {
+            return false;
+          }
+        }
+      }
+      return !FormatTok->Finalized;
+    }
     const bool HasRequiredIfBraces = IfLBrace && !IfLBrace->Optional;
     if (KeepBraces && !HasRequiredIfBraces)
       return false;
@@ -3004,6 +3040,28 @@ static void markOptionalBraces(FormatToken *LeftBrace) {
   RightBrace->Optional = true;
 }
 
+bool UnwrappedLineParser::singleStatementBracePolicy() const {
+  return Style.isCpp() &&
+         Style.ControlStatementBraces.Mode ==
+             FormatStyle::ControlStatementBracesStyle::SingleStatement;
+}
+
+bool UnwrappedLineParser::policyConditionIsWrapped(
+    const UnwrappedLine *ParsedLine) const {
+  if (!singleStatementBracePolicy() ||
+      Style.ControlStatementBraces.WrappedCondition !=
+          FormatStyle::ControlStatementBracesStyle::Require) {
+    return false;
+  }
+  bool SeenParen = false;
+  for (const auto &Node : (ParsedLine ? *ParsedLine : *Line).Tokens) {
+    if (SeenParen && (Node.Tok->NewlinesBefore > 0 || Node.Tok->IsMultiline))
+      return true;
+    SeenParen |= Node.Tok->is(tok::l_paren);
+  }
+  return false;
+}
+
 void UnwrappedLineParser::handleAttributes() {
   // Handle AttributeMacro, e.g. `if (x) UNLIKELY`.
   if (FormatTok->isAttribute())
@@ -3029,9 +3087,14 @@ bool UnwrappedLineParser::isBlockBegin(const FormatToken &Tok) const {
                            : Tok.is(tok::l_brace);
 }
 
-FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
-                                                  bool KeepBraces,
-                                                  bool IsVerilogAssert) {
+FormatToken *UnwrappedLineParser::parseIfThenElse(
+    IfStmtKind *IfKind, bool KeepBraces, bool IsVerilogAssert,
+    SmallVectorImpl<FormatToken *> *BraceChain) {
+  const bool Policy = singleStatementBracePolicy();
+  SmallVector<FormatToken *, 8> LocalChain;
+  const bool ChainRoot = !BraceChain;
+  if (!BraceChain)
+    BraceChain = &LocalChain;
   assert((FormatTok->is(tok::kw_if) ||
           (Style.isVerilog() &&
            FormatTok->isOneOf(tok::kw_restrict, Keywords.kw_assert,
@@ -3064,10 +3127,11 @@ FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
     nextToken();
 
   bool KeepIfBraces = true;
-  if (FormatTok->is(tok::kw_consteval)) {
+  const bool IsConsteval = FormatTok->is(tok::kw_consteval);
+  if (IsConsteval) {
     nextToken();
   } else {
-    KeepIfBraces = !Style.RemoveBracesLLVM || KeepBraces;
+    KeepIfBraces = !(Style.RemoveBracesLLVM || Policy) || KeepBraces;
     if (FormatTok->isOneOf(tok::kw_constexpr, tok::identifier))
       nextToken();
     if (FormatTok->is(tok::l_paren)) {
@@ -3075,6 +3139,11 @@ FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
       parseParens();
     }
   }
+  const bool WrappedCondition = policyConditionIsWrapped();
+  const bool HasAttributes =
+      FormatTok->isAttribute() || FormatTok->is(tok::l_square);
+  if (Policy)
+    KeepIfBraces |= WrappedCondition || HasAttributes;
   handleAttributes();
   // The then action is optional in Verilog assert statements.
   if (IsVerilogAssert && FormatTok->is(tok::semi)) {
@@ -3115,15 +3184,30 @@ FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
   }
 
   bool KeepElseBraces = KeepIfBraces;
+  if (Policy)
+    KeepElseBraces = IsConsteval;
   FormatToken *ElseLeftBrace = nullptr;
   IfStmtKind Kind = IfStmtKind::IfOnly;
 
   if (FormatTok->is(tok::kw_else)) {
-    if (Style.RemoveBracesLLVM) {
-      NestedTooDeep.back() = false;
+    if (Style.RemoveBracesLLVM || Policy) {
+      if (Policy) {
+        // Otherwise removing the then braces could rebind this else to an
+        // unmatched inner if, including one at the end of an else-if chain.
+        if (IfBlockKind == IfStmtKind::IfOnly ||
+            IfBlockKind == IfStmtKind::IfElseIf) {
+          IfLeftBrace = nullptr;
+        }
+      } else {
+        NestedTooDeep.back() = false;
+      }
       Kind = IfStmtKind::IfElse;
     }
     nextToken();
+    if (Policy) {
+      KeepElseBraces |=
+          FormatTok->isAttribute() || FormatTok->is(tok::l_square);
+    }
     handleAttributes();
     if (isBlockBegin(*FormatTok)) {
       const bool FollowedByIf = Tokens->peekNextToken()->is(tok::kw_if);
@@ -3139,7 +3223,7 @@ FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
         KeepElseBraces = KeepElseBraces ||
                          ElseBlockKind == IfStmtKind::IfOnly ||
                          ElseBlockKind == IfStmtKind::IfElseIf;
-      } else if (FollowedByIf && IfLBrace && !IfLBrace->Optional) {
+      } else if (!Policy && FollowedByIf && IfLBrace && !IfLBrace->Optional) {
         KeepElseBraces = true;
         assert(ElseLeftBrace->MatchingParen);
         markOptionalBraces(ElseLeftBrace);
@@ -3158,7 +3242,13 @@ FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
         Kind = IfStmtKind::IfElseIf;
         TooDeep = NestedTooDeep.pop_back_val();
       }
-      ElseLeftBrace = parseIfThenElse(/*IfKind=*/nullptr, KeepIfBraces);
+      if (Policy)
+        Kind = IfStmtKind::IfElseIf;
+      ElseLeftBrace = parseIfThenElse(
+          /*IfKind=*/nullptr, Policy ? false : KeepIfBraces,
+          /*IsVerilogAssert=*/false, Policy ? BraceChain : nullptr);
+      if (Policy)
+        ElseLeftBrace = nullptr;
       if (Style.RemoveBracesLLVM)
         NestedTooDeep.push_back(TooDeep);
       if (IsPrecededByComment)
@@ -3172,6 +3262,26 @@ FormatToken *UnwrappedLineParser::parseIfThenElse(IfStmtKind *IfKind,
       addUnwrappedLine();
   }
 
+  if (Policy) {
+    BraceChain->push_back(IfLeftBrace);
+    // An else-if belongs to the chain, not to a synthetic else body.
+    if (Kind == IfStmtKind::IfElse)
+      BraceChain->push_back(ElseLeftBrace);
+    if (ChainRoot) {
+      const bool Consistent =
+          Style.ControlStatementBraces.IfChain ==
+          FormatStyle::ControlStatementBracesStyle::Consistent;
+      const bool Required = llvm::any_of(*BraceChain, [](FormatToken *Brace) {
+        return !Brace || !Brace->MatchingParen;
+      });
+      if (!Consistent || !Required)
+        for (auto *Brace : *BraceChain)
+          markOptionalBraces(Brace);
+    }
+    if (IfKind)
+      *IfKind = Kind;
+    return IfLeftBrace;
+  }
   if (!Style.RemoveBracesLLVM)
     return nullptr;
 
@@ -3461,7 +3571,10 @@ void UnwrappedLineParser::parseLoopBody(bool KeepBraces, bool WrapRightBrace) {
     parseBlock(/*MustBeDeclaration=*/false, /*AddLevels=*/1u,
                /*MunchSemi=*/true, KeepBraces);
     setPreviousRBraceType(TT_ControlStatementRBrace);
-    if (!KeepBraces) {
+    if (singleStatementBracePolicy()) {
+      if (!KeepBraces)
+        markOptionalBraces(LeftBrace);
+    } else if (!KeepBraces) {
       assert(!NestedTooDeep.empty());
       if (!NestedTooDeep.back())
         markOptionalBraces(LeftBrace);
@@ -3472,7 +3585,7 @@ void UnwrappedLineParser::parseLoopBody(bool KeepBraces, bool WrapRightBrace) {
     parseUnbracedBody();
   }
 
-  if (!KeepBraces)
+  if (!KeepBraces && !singleStatementBracePolicy())
     NestedTooDeep.pop_back();
 }
 
@@ -3485,8 +3598,8 @@ void UnwrappedLineParser::parseForOrWhileLoop(bool HasParens) {
                               Keywords.kw_foreach, Keywords.kw_forever,
                               Keywords.kw_repeat))) &&
          "'for', 'while' or foreach macro expected");
-  const bool KeepBraces = !Style.RemoveBracesLLVM ||
-                          FormatTok->isNoneOf(tok::kw_for, tok::kw_while);
+  bool KeepBraces = !(Style.RemoveBracesLLVM || singleStatementBracePolicy()) ||
+                    FormatTok->isNoneOf(tok::kw_for, tok::kw_while);
 
   nextToken();
   // JS' for await ( ...
@@ -3513,6 +3626,10 @@ void UnwrappedLineParser::parseForOrWhileLoop(bool HasParens) {
     return;
   }
 
+  if (singleStatementBracePolicy()) {
+    KeepBraces |= policyConditionIsWrapped() || FormatTok->isAttribute() ||
+                  FormatTok->is(tok::l_square);
+  }
   handleAttributes();
   parseLoopBody(KeepBraces, /*WrapRightBrace=*/true);
 }
@@ -3521,7 +3638,9 @@ void UnwrappedLineParser::parseDoWhile() {
   assert(FormatTok->is(tok::kw_do) && "'do' expected");
   nextToken();
 
-  parseLoopBody(/*KeepBraces=*/true, Style.BraceWrapping.BeforeWhile);
+  FormatToken *LeftBrace = FormatTok->is(tok::l_brace) ? FormatTok : nullptr;
+  parseLoopBody(/*KeepBraces=*/!singleStatementBracePolicy(),
+                Style.BraceWrapping.BeforeWhile);
 
   // FIXME: Add error handling.
   if (FormatTok->isNot(tok::kw_while)) {
@@ -3538,6 +3657,12 @@ void UnwrappedLineParser::parseDoWhile() {
 
   nextToken();
   parseStructuralElement();
+  if (singleStatementBracePolicy() && LeftBrace && LeftBrace->MatchingParen &&
+      !CurrentLines->empty() &&
+      policyConditionIsWrapped(&CurrentLines->back())) {
+    LeftBrace->Optional = false;
+    LeftBrace->MatchingParen->Optional = false;
+  }
 }
 
 void UnwrappedLineParser::parseLabel(bool IsGotoLabel) {

@@ -398,6 +398,56 @@ class ClangFormatDiagConsumer : public DiagnosticConsumer {
   }
 };
 
+// Editors may discard a replacement that extends outside their requested range.
+// Multi-pass formatting can merge a brace deletion with whitespace on the next
+// line. Keep those edits separate without changing the fully formatted result.
+static Replacements
+splitBraceRemovalEdits(StringRef Code, const Replacements &Replaces,
+                       ArrayRef<clang::tooling::Range> Ranges) {
+  Replacements Result;
+  for (const auto &Replace : Replaces) {
+    StringRef Removed = Code.substr(Replace.getOffset(), Replace.getLength());
+    StringRef Text = Replace.getReplacementText();
+    if (Removed.find_first_of("{}") == StringRef::npos ||
+        Removed.find_first_not_of(" \t\r\n{}") != StringRef::npos ||
+        Text.find_first_not_of(" \t\r\n") != StringRef::npos) {
+      cantFail(Result.add(Replace));
+      continue;
+    }
+    unsigned Offset = Replace.getOffset();
+    const unsigned BraceEnd = Removed.find_last_of("{}") + 1;
+    const StringRef FollowingWhitespace = Removed.drop_front(BraceEnd);
+    if (!FollowingWhitespace.empty()) {
+      // The newline and indentation after the brace belong to the next line.
+      // Keep them in one edit, even if that edit crosses the editor's boundary.
+      // Deleting the following newline alone would join the removed brace's
+      // indentation to the next line when the editor discards the rest.
+      if (FollowingWhitespace != Text)
+        cantFail(Result.add(clang::tooling::Replacement(
+            Replace.getFilePath(), Offset + BraceEnd,
+            FollowingWhitespace.size(), Text)));
+      Text = "";
+    }
+    SmallVector<unsigned, 8> Cuts{Offset};
+    const unsigned End = Offset + BraceEnd;
+    for (const auto &Range : Ranges) {
+      for (unsigned Boundary :
+           {Range.getOffset(), Range.getOffset() + Range.getLength()})
+        if (Boundary > Offset && Boundary < End)
+          Cuts.push_back(Boundary);
+    }
+    Cuts.push_back(End);
+    llvm::sort(Cuts);
+    Cuts.erase(std::unique(Cuts.begin(), Cuts.end()), Cuts.end());
+    for (size_t I = 1; I < Cuts.size(); ++I) {
+      cantFail(Result.add(clang::tooling::Replacement(
+          Replace.getFilePath(), Cuts[I - 1], Cuts[I] - Cuts[I - 1], Text)));
+      Text = "";
+    }
+  }
+  return Result;
+}
+
 // Returns true on error.
 static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
   const bool IsSTDIN = FileName == "-";
@@ -420,6 +470,7 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
     return false; // Empty files are formatted correctly.
 
   StringRef BufStr = Code->getBuffer();
+  StringRef AssumedFileName = IsSTDIN ? AssumeFileName : FileName;
 
   const char *InvalidBOM = SrcMgr::ContentCache::getInvalidBOM(BufStr);
 
@@ -435,7 +486,6 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
   std::vector<tooling::Range> Ranges;
   if (fillRanges(Code.get(), Ranges))
     return true;
-  StringRef AssumedFileName = IsSTDIN ? AssumeFileName : FileName;
   if (AssumedFileName.empty()) {
     llvm::errs() << "error: empty filenames are not allowed\n";
     return true;
@@ -476,6 +526,7 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
       FormatStyle->SortIncludes.Enabled = true;
   }
   unsigned CursorPosition = Cursor;
+  const auto RequestedRanges = Ranges;
   Replacements Replaces = sortIncludes(*FormatStyle, Code->getBuffer(), Ranges,
                                        AssumedFileName, &CursorPosition);
 
@@ -501,6 +552,10 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
   Replacements FormatChanges =
       reformat(*FormatStyle, *ChangedCode, Ranges, AssumedFileName, &Status);
   Replaces = Replaces.merge(FormatChanges);
+  if (FormatStyle->ControlStatementBraces.Mode !=
+      FormatStyle::ControlStatementBracesStyle::Leave)
+    Replaces =
+        splitBraceRemovalEdits(Code->getBuffer(), Replaces, RequestedRanges);
   if (DryRun) {
     return Replaces.size() > (IsJson ? 1u : 0u) &&
            emitReplacementWarnings(Replaces, AssumedFileName, std::move(Code));

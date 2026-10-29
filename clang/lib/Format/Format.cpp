@@ -48,6 +48,39 @@ enum BracketAlignmentStyle : int8_t {
 
 namespace llvm {
 namespace yaml {
+using ControlBraces = FormatStyle::ControlStatementBracesStyle;
+
+template <> struct ScalarEnumerationTraits<ControlBraces::ModeStyle> {
+  static void enumeration(IO &IO, ControlBraces::ModeStyle &Value) {
+    IO.enumCase(Value, "Leave", ControlBraces::Leave);
+    IO.enumCase(Value, "Always", ControlBraces::Always);
+    IO.enumCase(Value, "SingleStatement", ControlBraces::SingleStatement);
+  }
+};
+
+template <> struct ScalarEnumerationTraits<ControlBraces::IfChainStyle> {
+  static void enumeration(IO &IO, ControlBraces::IfChainStyle &Value) {
+    IO.enumCase(Value, "Independent", ControlBraces::Independent);
+    IO.enumCase(Value, "Consistent", ControlBraces::Consistent);
+  }
+};
+
+template <>
+struct ScalarEnumerationTraits<ControlBraces::WrappedConditionStyle> {
+  static void enumeration(IO &IO, ControlBraces::WrappedConditionStyle &Value) {
+    IO.enumCase(Value, "Ignore", ControlBraces::Ignore);
+    IO.enumCase(Value, "Require", ControlBraces::Require);
+  }
+};
+
+template <> struct MappingTraits<ControlBraces> {
+  static void mapping(IO &IO, ControlBraces &Value) {
+    IO.mapOptional("Mode", Value.Mode);
+    IO.mapOptional("IfChain", Value.IfChain);
+    IO.mapOptional("WrappedCondition", Value.WrappedCondition);
+  }
+};
+
 template <>
 struct ScalarEnumerationTraits<FormatStyle::BreakBeforeNoexceptSpecifierStyle> {
   static void
@@ -1426,6 +1459,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("IndentWrappedFunctionNames",
                    Style.IndentWrappedFunctionNames);
+    IO.mapOptional("ControlStatementBraces", Style.ControlStatementBraces);
     IO.mapOptional("InsertBraces", Style.InsertBraces);
     IO.mapOptional("InsertNewlineAtEOF", Style.InsertNewlineAtEOF);
     IO.mapOptional("InsertTrailingCommas", Style.InsertTrailingCommas);
@@ -1733,6 +1767,9 @@ std::string ParseErrorCategory::message(int EV) const {
     return "Missing type in QualifierOrder";
   case ParseError::MissingQualifierOrder:
     return "Missing QualifierOrder";
+  case ParseError::ControlStatementBracesConflict:
+    return "ControlStatementBraces cannot be combined with InsertBraces or "
+           "RemoveBracesLLVM";
   }
   llvm_unreachable("unexpected parse error");
 }
@@ -2005,6 +2042,10 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.IndentWidth = 2;
   LLVMStyle.IndentWrappedFunctionNames = false;
   LLVMStyle.InsertBraces = false;
+  LLVMStyle.ControlStatementBraces = {
+      FormatStyle::ControlStatementBracesStyle::Leave,
+      FormatStyle::ControlStatementBracesStyle::Independent,
+      FormatStyle::ControlStatementBracesStyle::Ignore};
   LLVMStyle.InsertNewlineAtEOF = false;
   LLVMStyle.InsertTrailingCommas = FormatStyle::TCS_None;
   LLVMStyle.IntegerLiteralSeparator = {};
@@ -2618,6 +2659,11 @@ std::error_code parseConfiguration(llvm::MemoryBufferRef Config,
     // See comment on FormatStyle::TSC_Wrapped.
     return make_error_code(ParseError::BinPackTrailingCommaConflict);
   }
+  if (Style->ControlStatementBraces.Mode !=
+          FormatStyle::ControlStatementBracesStyle::Leave &&
+      (Style->InsertBraces || Style->RemoveBracesLLVM)) {
+    return make_error_code(ParseError::ControlStatementBracesConflict);
+  }
   if (Style->QualifierAlignment != FormatStyle::QAS_Leave)
     return make_error_code(validateQualifierOrder(Style));
   return make_error_code(ParseError::Success);
@@ -2783,11 +2829,28 @@ public:
           FormatTokenLexer &Tokens) override {
     AffectedRangeMgr.computeAffectedLines(AnnotatedLines);
     tooling::Replacements Result;
+    if (Style.ControlStatementBraces.Mode ==
+        FormatStyle::ControlStatementBracesStyle::SingleStatement) {
+      AffectedTokens.clear();
+      collectAffectedTokens(AnnotatedLines);
+    }
     removeBraces(AnnotatedLines, Result);
     return {Result, 0};
   }
 
 private:
+  llvm::SmallPtrSet<const FormatToken *, 32> AffectedTokens;
+
+  void collectAffectedTokens(ArrayRef<AnnotatedLine *> Lines) {
+    for (auto *Line : Lines) {
+      if (!Line->Children.empty())
+        collectAffectedTokens(Line->Children);
+      if (Line->Affected)
+        for (auto *Token = Line->First; Token; Token = Token->Next)
+          AffectedTokens.insert(Token);
+    }
+  }
+
   void removeBraces(SmallVectorImpl<AnnotatedLine *> &Lines,
                     tooling::Replacements &Result) {
     const auto &SourceMgr = Env.getSourceManager();
@@ -2803,6 +2866,12 @@ private:
            Token = Token->Next) {
         if (!Token->Optional || Token->isNoneOf(tok::l_brace, tok::r_brace))
           continue;
+        if (Style.ControlStatementBraces.Mode ==
+                FormatStyle::ControlStatementBracesStyle::SingleStatement &&
+            (!Token->MatchingParen ||
+             !AffectedTokens.contains(Token->MatchingParen))) {
+          continue;
+        }
         auto *Next = Token->Next;
         assert(Next || Token == Line->Last);
         if (!Next && NextLine)
@@ -4329,6 +4398,8 @@ reformat(const FormatStyle &Style, StringRef Code,
   // These are handled by separate passes.
   Expanded.InsertBraces = false;
   Expanded.RemoveBracesLLVM = false;
+  Expanded.ControlStatementBraces.Mode =
+      FormatStyle::ControlStatementBracesStyle::Leave;
   Expanded.RemoveParentheses = FormatStyle::RPS_Leave;
   Expanded.RemoveSemicolon = false;
 
@@ -4461,6 +4532,30 @@ reformat(const FormatStyle &Style, StringRef Code,
     });
   }
 
+  if (Style.isCpp()) {
+    using Policy = FormatStyle::ControlStatementBracesStyle;
+    if (Style.ControlStatementBraces.Mode != Policy::Leave) {
+      FormatStyle S = Expanded;
+      S.InsertBraces = true;
+      Passes.emplace_back([S](const Environment &Env) {
+        return BracesInserter(Env, S).process(/*SkipAnnotation=*/true);
+      });
+      if (Style.ControlStatementBraces.Mode == Policy::SingleStatement) {
+        // Start from the same braced representation on every invocation. This
+        // makes wrapping independent of input whitespace and avoids oscillation
+        // when an attached opening brace would push a header over ColumnLimit.
+        Passes.emplace_back([&](const Environment &Env) {
+          return Formatter(Env, Expanded, Status).process();
+        });
+        S = Expanded;
+        S.ControlStatementBraces = Style.ControlStatementBraces;
+        Passes.emplace_back([S](const Environment &Env) {
+          return BracesRemover(Env, S).process(/*SkipAnnotation=*/true);
+        });
+      }
+    }
+  }
+
   Passes.emplace_back([&](const Environment &Env) {
     return Formatter(Env, Expanded, Status).process();
   });
@@ -4500,10 +4595,11 @@ reformat(const FormatStyle &Style, StringRef Code,
     }
   }
 
-  if (Style.QualifierAlignment != FormatStyle::QAS_Leave) {
-    // Don't make replacements that replace nothing. QualifierAlignment can
-    // produce them if one of its early passes changes e.g. `const volatile` to
-    // `volatile const` and then a later pass changes it back again.
+  if (Style.QualifierAlignment != FormatStyle::QAS_Leave ||
+      Style.ControlStatementBraces.Mode !=
+          FormatStyle::ControlStatementBracesStyle::Leave) {
+    // Don't make replacements that replace nothing. Qualifier alignment and
+    // canonical brace insertion followed by removal can undo earlier edits.
     tooling::Replacements NonNoOpFixes;
     for (const tooling::Replacement &Fix : Fixes) {
       StringRef OriginalCode = Code.substr(Fix.getOffset(), Fix.getLength());
@@ -4516,6 +4612,38 @@ reformat(const FormatStyle &Style, StringRef Code,
       }
     }
     Fixes = std::move(NonNoOpFixes);
+  }
+
+  if (Style.isCpp() &&
+      Style.ControlStatementBraces.Mode !=
+          FormatStyle::ControlStatementBracesStyle::Leave &&
+      llvm::any_of(Fixes, [&](const tooling::Replacement &Fix) {
+        auto OutsideRanges = [&](uint64_t Offset, unsigned Length) {
+          return llvm::none_of(Ranges, [&](const tooling::Range &Range) {
+            return Offset >= Range.getOffset() &&
+                   Offset + Length <=
+                       uint64_t(Range.getOffset()) + Range.getLength();
+          });
+        };
+        const StringRef Removed = Code.substr(Fix.getOffset(), Fix.getLength());
+        for (const auto [Index, Character] : llvm::enumerate(Removed))
+          if ((Character == '{' || Character == '}') &&
+              OutsideRanges(uint64_t(Fix.getOffset()) + Index, 1))
+            return true;
+        return Fix.getReplacementText().find_first_of("{}") !=
+                   StringRef::npos &&
+               OutsideRanges(Fix.getOffset(), 0);
+      })) {
+    // Affected-line expansion and intermediate formatting can extend the
+    // effective range beyond the editor's original request. Editors may apply
+    // only in-range replacements, which would split a brace insertion/removal
+    // pair. Whitespace edits may cross a boundary, but brace edits must remain
+    // inside it. Reformat without the policy if a brace edit is outside.
+    FormatStyle SafeStyle = Style;
+    SafeStyle.ControlStatementBraces.Mode =
+        FormatStyle::ControlStatementBracesStyle::Leave;
+    return reformat(SafeStyle, Code, Ranges, FirstStartColumn, NextStartColumn,
+                    LastStartColumn, FileName, Status);
   }
 
   return {Fixes, Penalty};
