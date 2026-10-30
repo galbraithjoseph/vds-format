@@ -74,6 +74,20 @@ TEST(ConfigParseTest, GetsPredefinedStyleByName) {
   EXPECT_FALSE(getPredefinedStyle("qwerty", FormatStyle::LK_Cpp, &Styles[0]));
 }
 
+TEST(ConfigParseTest, FunctionDeclarationSeparatorColumn) {
+  auto Style = getLLVMStyle();
+  EXPECT_EQ(0u, Style.FunctionDeclarationSeparatorColumn);
+  EXPECT_EQ(0,
+            parseConfiguration("FunctionDeclarationSeparatorColumn: 80", &Style)
+                .value());
+  EXPECT_EQ(80u, Style.FunctionDeclarationSeparatorColumn);
+  auto RoundTrip = getLLVMStyle();
+  EXPECT_FALSE(Style == RoundTrip);
+  EXPECT_EQ(0,
+            parseConfiguration(configurationAsText(Style), &RoundTrip).value());
+  EXPECT_EQ(Style, RoundTrip);
+}
+
 TEST(ConfigParseTest, SelectiveInnerParenthesisSpacing) {
   auto Style = getLLVMStyle();
   EXPECT_FALSE(Style.SpacesInParensOptions.ExceptForLoops);
@@ -1416,6 +1430,11 @@ TEST(ConfigParseTest, ParsesConfiguration) {
               FormatStyle::BBNSS_OnlyWithParen);
   CHECK_PARSE("AllowBreakBeforeNoexceptSpecifier: Never",
               AllowBreakBeforeNoexceptSpecifier, FormatStyle::BBNSS_Never);
+
+  CHECK_PARSE("FunctionDeclarationSeparatorColumn: 80",
+              FunctionDeclarationSeparatorColumn, 80u);
+  CHECK_PARSE("FunctionDeclarationSeparatorColumn: 0",
+              FunctionDeclarationSeparatorColumn, 0u);
 
   Style.SeparateDefinitionBlocks = FormatStyle::SDS_Never;
   CHECK_PARSE("SeparateDefinitionBlocks: Always", SeparateDefinitionBlocks,

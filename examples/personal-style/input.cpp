@@ -1,4 +1,4 @@
-// Function declarations: stock clang-format does not add tilde separators.
+// Function declarations receive separators ending at display column 80.
 void prepare();void run();void wait();void step(int index);
 bool firstLongReadinessConditionIsSatisfied();bool secondLongReadinessConditionIsSatisfied();
 

@@ -23,6 +23,7 @@
 #include "UnwrappedLineFormatter.h"
 #include "UsingDeclarationsSorter.h"
 #include "clang/Tooling/Inclusions/HeaderIncludes.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/FileSystem.h"
@@ -1542,6 +1543,8 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("RequiresExpressionIndentation",
                    Style.RequiresExpressionIndentation);
     IO.mapOptional("SeparateDefinitionBlocks", Style.SeparateDefinitionBlocks);
+    IO.mapOptional("FunctionDeclarationSeparatorColumn",
+                   Style.FunctionDeclarationSeparatorColumn);
     IO.mapOptional("ShortNamespaceLines", Style.ShortNamespaceLines);
     IO.mapOptional("SkipMacroDefinitionBody", Style.SkipMacroDefinitionBody);
     IO.mapOptional("SortIncludes", Style.SortIncludes);
@@ -2093,6 +2096,7 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.RequiresClausePosition = FormatStyle::RCPS_OwnLine;
   LLVMStyle.RequiresExpressionIndentation = FormatStyle::REI_OuterScope;
   LLVMStyle.SeparateDefinitionBlocks = FormatStyle::SDS_Leave;
+  LLVMStyle.FunctionDeclarationSeparatorColumn = 0;
   LLVMStyle.ShortNamespaceLines = 1;
   LLVMStyle.SkipMacroDefinitionBody = false;
   LLVMStyle.SortIncludes = {/*Enabled=*/true, /*IgnoreCase=*/false,
@@ -2734,6 +2738,124 @@ void replaceToken(const FormatToken &Token, FormatToken *Next,
   cantFail(Result.add(tooling::Replacement(SourceMgr, Range, Text)));
 }
 
+// Runs after layout so OriginalColumn describes the formatted declaration.
+class FunctionDeclarationSeparator : public TokenAnalyzer {
+  // TokenAnalyzer invokes analyze for each preprocessor branch combination.
+  // A declaration outside a conditional can appear in several runs, but edits
+  // at the same source position must only be emitted once.
+  llvm::DenseSet<unsigned> ProcessedPositions;
+
+public:
+  FunctionDeclarationSeparator(const Environment &Env, const FormatStyle &Style)
+      : TokenAnalyzer(Env, Style) {}
+
+  std::pair<tooling::Replacements, unsigned>
+  analyze(TokenAnnotator &Annotator, SmallVectorImpl<AnnotatedLine *> &Lines,
+          FormatTokenLexer &Tokens) override {
+    for (auto *Line : Lines)
+      Annotator.calculateFormattingInformation(*Line);
+    tooling::Replacements Result;
+    separate(Lines, Result);
+    return {Result, 0};
+  }
+
+private:
+  void separate(ArrayRef<AnnotatedLine *> Lines,
+                tooling::Replacements &Result) {
+    const auto &SM = Env.getSourceManager();
+    const StringRef Code = SM.getBufferData(Env.getFileID());
+    const StringRef Newline = Code.contains("\r\n") ? "\r\n" : "\n";
+    auto Offset = [&](const FormatToken *Tok) {
+      return SM.getFileOffset(Tok->Tok.getLocation());
+    };
+    auto LineStart = [&](unsigned Pos) {
+      const auto Prev = Code.take_front(Pos).rfind('\n');
+      return Prev == StringRef::npos ? 0u : unsigned(Prev + 1);
+    };
+    auto IsSeparator = [](const FormatToken *Tok) {
+      StringRef Text = Tok->TokenText;
+      return Text.consume_front("//") && !Text.empty() &&
+             Text.find_first_not_of('~') == StringRef::npos;
+    };
+    SmallVector<const FormatToken *> Comments;
+    for (unsigned I = 0; I < Lines.size(); ++I) {
+      const auto *Line = Lines[I];
+      separate(Line->Children, Result);
+      for (auto *Tok = Line->First; Tok; Tok = Tok->Next)
+        if (Tok->is(tok::comment))
+          Comments.push_back(Tok);
+      if (Line->InPPDirective || Line->InMacroBody || Line->First->Finalized)
+        continue;
+      bool Function = false;
+      for (auto *Tok = Line->First; Tok; Tok = Tok->Next) {
+        Function |=
+            Tok->isOneOf(TT_FunctionDeclarationName, TT_CtorDtorDeclName);
+      }
+      if (!Function)
+        continue;
+      const unsigned Column = Line->First->OriginalColumn;
+      if (Column >= Style.FunctionDeclarationSeparatorColumn ||
+          Style.FunctionDeclarationSeparatorColumn - Column < 3) {
+        continue;
+      }
+      const auto *First = Line->First;
+      // A comment block may share one annotated line, including a format-on
+      // marker. Walk individual comment tokens without crossing that marker.
+      for (const auto *Comment : llvm::reverse(Comments)) {
+        const unsigned CommentEnd = SM.getFileOffset(Comment->Tok.getEndLoc());
+        if (CommentEnd > Offset(First))
+          continue;
+        const StringRef Gap = Code.slice(CommentEnd, Offset(First));
+        if (Comment->Finalized || isClangFormatOn(Comment->TokenText) ||
+            isClangFormatOff(Comment->TokenText) || !Gap.trim().empty() ||
+            Gap.count('\n') != 1 ||
+            !Code.slice(LineStart(Offset(Comment)), Offset(Comment))
+                 .trim()
+                 .empty()) {
+          break;
+        }
+        First = Comment;
+      }
+      const unsigned Begin = LineStart(Offset(First));
+      // Do not split an inline declaration or detach a trailing comment.
+      if (!Code.slice(Begin, Offset(First)).trim().empty())
+        continue;
+      const unsigned DeclBegin = LineStart(Offset(Line->First));
+      const StringRef Indent = Code.slice(DeclBegin, Offset(Line->First));
+      if (!Indent.trim().empty())
+        continue;
+      const unsigned End = SM.getFileOffset(Line->Last->Tok.getEndLoc());
+      if (llvm::none_of(Env.getCharRanges(), [&](CharSourceRange Range) {
+            return Begin >= SM.getFileOffset(Range.getBegin()) &&
+                   End <= SM.getFileOffset(Range.getEnd());
+          })) {
+        continue;
+      }
+      if (!ProcessedPositions.insert(Begin).second)
+        continue;
+      std::string Separator =
+          Indent.str() + "//" +
+          std::string(Style.FunctionDeclarationSeparatorColumn - Column - 2,
+                      '~');
+      if (IsSeparator(First)) {
+        const unsigned OldEnd = SM.getFileOffset(First->Tok.getEndLoc());
+        if (Code.slice(Begin, OldEnd) != Separator) {
+          cantFail(Result.add(tooling::Replacement(
+              SM,
+              SM.getLocForStartOfFile(Env.getFileID()).getLocWithOffset(Begin),
+              OldEnd - Begin, Separator)));
+        }
+      } else {
+        Separator += Newline;
+        cantFail(Result.add(tooling::Replacement(
+            SM,
+            SM.getLocForStartOfFile(Env.getFileID()).getLocWithOffset(Begin), 0,
+            Separator)));
+      }
+    }
+  }
+};
+
 class ParensRemover : public TokenAnalyzer {
 public:
   ParensRemover(const Environment &Env, const FormatStyle &Style)
@@ -2768,6 +2890,10 @@ private:
 };
 
 class BracesInserter : public TokenAnalyzer {
+  // Common code is revisited for each preprocessor branch. Track emitted
+  // insertions across runs while still balancing BraceCount within each run.
+  llvm::DenseSet<unsigned> InsertedPositions;
+
 public:
   BracesInserter(const Environment &Env, const FormatStyle &Style)
       : TokenAnalyzer(Env, Style) {}
@@ -2814,7 +2940,8 @@ private:
         }
         Token->BraceCount = 0;
         const auto Start = Token->Tok.getEndLoc();
-        cantFail(Result.add(tooling::Replacement(SourceMgr, Start, 0, Brace)));
+        if (InsertedPositions.insert(SourceMgr.getFileOffset(Start)).second)
+          cantFail(Result.add(tooling::Replacement(SourceMgr, Start, 0, Brace)));
       }
     }
     assert(OpeningBraceSurplus == 0);
@@ -4574,6 +4701,18 @@ reformat(const FormatStyle &Style, StringRef Code,
     Passes.emplace_back([&](const Environment &Env) {
       return TrailingCommaInserter(Env, Expanded).process();
     });
+  }
+
+  if (Style.isCpp() && Style.FunctionDeclarationSeparatorColumn != 0) {
+    Passes.emplace_back([&](const Environment &Env) {
+      return FunctionDeclarationSeparator(Env, Expanded).process();
+    });
+    // Inserted comment lines can make a short namespace require an end comment.
+    if (Style.FixNamespaceComments) {
+      Passes.emplace_back([&](const Environment &Env) {
+        return NamespaceEndCommentsFixer(Env, Expanded).process();
+      });
+    }
   }
 
   std::optional<std::string> CurrentCode;

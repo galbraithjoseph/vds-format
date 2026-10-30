@@ -1,11 +1,18 @@
-// Function declarations: stock clang-format does not add tilde separators.
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Function declarations receive separators ending at display column 80.
 void prepare();
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void run();
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void wait();
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void step(int index);
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool firstLongReadinessConditionIsSatisfied();
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool secondLongReadinessConditionIsSatisfied();
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Simple if/else: optional braces can be removed.
 void
 simple(bool ready)
@@ -16,6 +23,7 @@ simple(bool ready)
 		wait();
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // A multi-statement branch requires braces throughout the chain.
 void
 mixedBranches(bool ready)
@@ -31,6 +39,7 @@ mixedBranches(bool ready)
 	}
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // A wrapped condition requires braces around both single-statement bodies.
 void
 wrappedCondition()
@@ -46,6 +55,7 @@ wrappedCondition()
 	}
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // The chain decision includes all else-if branches, including mixed input.
 void
 chained(bool ready, bool retry)
@@ -65,6 +75,7 @@ chained(bool ready, bool retry)
 	}
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Spacing after ! and inside while parentheses.
 void
 polling(bool bStopped)
@@ -76,6 +87,7 @@ polling(bool bStopped)
 	}
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Stock conditional-parenthesis spacing also affects for headers.
 void
 counting(int count)
@@ -84,6 +96,7 @@ counting(int count)
 		step(index);
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Constructor initializers: colon on the signature, one initializer per line.
 x::x() :
 	a(2),
@@ -92,18 +105,20 @@ x::x() :
 {
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void
 xxx::Shutdown()
 {
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 template<class X>
 blah
 xxx<X>::fooy()
 {
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Short lambdas stay inline when they fit within the column limit.
 void
 xxx::callbacks()
@@ -113,6 +128,7 @@ xxx::callbacks()
 	m_cvThread.wait(lock, [this] { return m_bThreadExit || m_bSystemTimerReceived; });
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Calls stay compact until wrapping is needed, then use one argument per line.
 void
 arguments()
@@ -124,6 +140,7 @@ arguments()
 	  504);
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void
 assertionSpacing()
 {
@@ -132,6 +149,7 @@ assertionSpacing()
 	x(y);
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Nonempty braced initializers have spaces inside the braces.
 void
 bracedInitializers()
@@ -141,12 +159,15 @@ bracedInitializers()
 	int empty{};
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Parameters stay compact until wrapping is needed, then use one per line.
 void shortParameters(int first, int second, int third);
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void wrappedParameters(int firstParameterWithALongName,
 					   int secondParameterWithALongName,
 					   int thirdParameterWithALongName,
 					   int fourth);
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void
 wrappedDefinition(int firstParameterWithALongName,
 				  int secondParameterWithALongName,
@@ -155,12 +176,14 @@ wrappedDefinition(int firstParameterWithALongName,
 {
 	run();
 }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void
 functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemTogetherEvenThoughTheyWouldFitThereTogether(
 	int a,
 	int b,
 	int c);
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void
 switchSpacing(int value)
 {

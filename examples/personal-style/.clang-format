@@ -17,6 +17,7 @@ BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
 MaxEmptyLinesToKeep: 2
 ColumnLimit: 120
+FunctionDeclarationSeparatorColumn: 80
 PackArguments:
   BinPack: OnePerLine
 AllowAllArgumentsOnNextLine: false

@@ -5173,6 +5173,24 @@ struct FormatStyle {
   /// \version 14
   SeparateDefinitionStyle SeparateDefinitionBlocks;
 
+  /// End column (one-based) of a standalone ``//`` plus tildes separator
+  /// before C/C++ function declarations and definitions. Zero disables this
+  /// option. For example, 80 emits 78 tildes at zero indentation, or 74 at
+  /// four columns of indentation. Tabs count as display columns.
+  ///
+  /// The separator precedes contiguous documentation and ordinary comments,
+  /// and aligns with the first line of the declaration, including templates
+  /// and attributes. Existing lines containing only ``//`` immediately followed
+  /// by tildes are resized. Other comments are preserved. If fewer than three
+  /// columns remain, no separator is inserted or resized.
+  ///
+  /// Preprocessor directives and disabled regions are not crossed. A separator
+  /// is changed only when its position, attached comments and complete
+  /// declaration header are inside a requested formatting range. Declarations
+  /// sharing a physical line with preceding code are left unchanged.
+  /// \version 24
+  unsigned FunctionDeclarationSeparatorColumn;
+
   /// The maximal number of unwrapped lines that a short namespace spans.
   /// Defaults to 1.
   ///
@@ -6444,6 +6462,8 @@ struct FormatStyle {
            RemoveSemicolon == R.RemoveSemicolon &&
            RequiresClausePosition == R.RequiresClausePosition &&
            RequiresExpressionIndentation == R.RequiresExpressionIndentation &&
+           FunctionDeclarationSeparatorColumn ==
+               R.FunctionDeclarationSeparatorColumn &&
            SeparateDefinitionBlocks == R.SeparateDefinitionBlocks &&
            ShortNamespaceLines == R.ShortNamespaceLines &&
            SkipMacroDefinitionBody == R.SkipMacroDefinitionBody &&
