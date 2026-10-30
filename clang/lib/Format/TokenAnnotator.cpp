@@ -5053,6 +5053,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                  ? Options.AfterFunctionDefinitionName
                  : Options.AfterFunctionDeclarationName;
     }
+    if (Right.is(TT_LambdaDefinitionLParen) &&
+        Style.SpaceBeforeParensOptions.AfterLambdaCaptureList)
+      return true;
     if (Left.is(TT_TemplateCloser) && Right.isNot(TT_FunctionTypeLParen))
       return spaceRequiredBeforeParens(Right);
     if (Left.isOneOf(TT_RequiresClause,

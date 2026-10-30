@@ -38,7 +38,8 @@ Nonempty braced initializers use interior spaces, as in `int x{ 0 };`
 and `int values[]{ 1, 2, 3 };`, via `Cpp11BracedListStyle: Block`. Empty
 initializers remain `{}`. Wrapped initializer lists use block indentation and
 put the closing brace on its own line. Empty blocks may stay
-on one line; function bodies are expanded. Short lambdas may stay on one line
+on one line; function bodies are expanded. Lambda parameter lists have a leading space (`[captures] (args)`) via
+`SpaceBeforeParensOptions.AfterLambdaCaptureList`. Short lambdas may stay on one line
 within the 120-column limit. Multiline lambda braces align with the enclosing
 statement. Function calls keep arguments together when they fit; wrapped calls
 use one argument per line, aligned with the first argument beside the function

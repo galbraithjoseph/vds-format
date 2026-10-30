@@ -56,7 +56,12 @@ AllowShortLambdasOnASingleLine: All
 LambdaBodyIndentation: OuterScope
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-SpaceBeforeParens: ControlStatements
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterForeachMacros: true
+  AfterIfMacros: true
+  AfterLambdaCaptureList: true
 SpacesInParens: Custom
 SpacesInParensOptions:
   InConditionalStatements: true

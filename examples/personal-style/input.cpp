@@ -78,3 +78,8 @@ int first;
 int second;
 int third;
 }
+
+// Lambda parameters have a space after the capture list.
+auto capturedLambda = [value](int argument) { return value + argument; };
+auto emptyLambda = []() {};
+auto genericLambda = []<class T>(T value) { return value; };
