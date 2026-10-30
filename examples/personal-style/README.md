@@ -28,8 +28,21 @@ output with `expected.cpp`, and verifies second-pass idempotence. Failures print
 a diff or diagnostic and return status 1. Line endings are normalized for comparison.
 
 To apply the sample elsewhere, copy `.clang-format` into the project's root or
-pass `--style=file:<path>`. It inherits LLVM defaults, including two-space
-indentation. `input.cpp` and `expected.cpp` are formatting fixtures with external
+pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
+pointers and references, and indented namespace contents. Empty blocks may stay
+on one line; function bodies are expanded. Short lambdas may stay on one line
+within the 120-column limit. Multiline lambda braces align with the enclosing
+statement. Function calls keep arguments together when they fit; wrapped calls
+use one argument per line, aligned with the first argument beside the function
+name when it fits there. Constructor
+initializer lists keep the colon on the signature line and put each initializer
+on its own line, indented four columns. Function definitions put return types
+on their own line; declarations keep the return type and function name together
+when they fit within the column limit. Template declarations use
+`template<class X>` spacing and always break before the following declaration.
+Up to two consecutive blank lines are
+preserved. Other unspecified settings inherit LLVM defaults.
+`input.cpp` and `expected.cpp` are formatting fixtures with external
 function declarations, not complete programs.
 
 ## Brace policy
@@ -45,7 +58,7 @@ BreakBeforeBraces: Allman
 - `simple` removes optional braces from both single-statement branches.
 - `mixedBranches` and `chained` brace every branch because one branch contains
   two statements. An else-if stays an else-if.
-- `wrappedCondition` forces a condition to wrap at `ColumnLimit: 80` and braces
+- `wrappedCondition` forces a condition to wrap at `ColumnLimit: 120` and braces
   both single-statement branches.
 - `polling` retains its two-statement while body; `counting` removes the optional
   braces around its single statement.

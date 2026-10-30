@@ -1,10 +1,30 @@
 # Personal style using the brace-policy extension from issue #2.
 BasedOnStyle: LLVM
 Language: Cpp
-ColumnLimit: 80
+UseTab: Always
+TabWidth: 4
+IndentWidth: 4
+ContinuationIndentWidth: 4
+BreakConstructorInitializers: AfterColon
+PackConstructorInitializers: Never
+ConstructorInitializerIndentWidth: 4
+PointerAlignment: Left
+ReferenceAlignment: Left
+NamespaceIndentation: All
+BreakTemplateDeclarations: Yes
+BreakAfterReturnType: AllDefinitions
+SpaceAfterTemplateKeyword: false
+MaxEmptyLinesToKeep: 2
+ColumnLimit: 120
+PackArguments:
+  BinPack: OnePerLine
+AllowAllArgumentsOnNextLine: false
+AlignAfterOpenBracket: true
 BreakBeforeBraces: Allman
-AllowShortBlocksOnASingleLine: Never
+AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: All
+LambdaBodyIndentation: OuterScope
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 SpaceBeforeParens: ControlStatements
