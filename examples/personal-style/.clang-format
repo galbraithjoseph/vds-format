@@ -8,6 +8,7 @@ ContinuationIndentWidth: 4
 BreakConstructorInitializers: AfterColon
 PackConstructorInitializers: Never
 ConstructorInitializerIndentWidth: 4
+Cpp11BracedListStyle: Block
 PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
