@@ -116,3 +116,9 @@ template<class S> concept StringLike = requires(const S& source) { source.data()
 
 // Prefer wrapping logical operands instead of breaking after assignment.
 void logicalAssignment() { bSuccess = firstReadinessConditionForThisOperationIsSatisfied() && secondReadinessConditionForThisOperationIsSatisfied(); bSuccess = firstReadinessConditionForThisOperationIsSatisfied() || secondReadinessConditionForThisOperationIsSatisfied(); }
+
+// A blank empty lambda body still formats the space before its parameters.
+auto fnFree = [](void* pv)
+{
+
+};

@@ -348,3 +348,9 @@ logicalAssignment()
 	bSuccess = firstReadinessConditionForThisOperationIsSatisfied() ||
 			   secondReadinessConditionForThisOperationIsSatisfied();
 }
+
+// A blank empty lambda body still formats the space before its parameters.
+auto fnFree = [] (void* pv)
+{
+
+};

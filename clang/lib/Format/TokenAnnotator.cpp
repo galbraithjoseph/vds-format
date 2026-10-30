@@ -6820,6 +6820,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
 
   auto ShortLambdaOption = Style.AllowShortLambdasOnASingleLine;
   if (Style.BraceWrapping.BeforeLambdaBody && Right.is(TT_LambdaLBrace)) {
+    // A preserved blank line prevents an empty lambda from being collapsed.
+    // Keep the brace break available so the signature can still be formatted.
+    if (Style.MaxEmptyLinesToKeep > 0 && Right.Children.empty() &&
+        Right.MatchingParen && Right.MatchingParen->NewlinesBefore > 1)
+      return true;
     if (isAllmanLambdaBrace(Left))
       return !isEmptyLambdaAllowed(Left, ShortLambdaOption);
     if (isAllmanLambdaBrace(Right))
