@@ -29,7 +29,9 @@ a diff or diagnostic and return status 1. Line endings are normalized for compar
 
 To apply the sample elsewhere, copy `.clang-format` into the project's root or
 pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
-pointers and references, and indented namespace contents. Class access specifiers (`public:`,
+pointers and references, and indented namespace contents.
+`FixNamespaceComments: false` prevents generated comments on namespace closing
+braces. Class access specifiers (`public:`,
 `protected:`, and `private:`) align with the class braces; members indent one
 level.
 Nonempty braced initializers use interior spaces, as in `int x{ 0 };`

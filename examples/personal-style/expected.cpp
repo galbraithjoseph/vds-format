@@ -247,3 +247,11 @@ private:
 int firstComment;	// First.
 int secondComment;		// Second.
 int mixedComment; 	  // Mixed spacing.
+
+// Namespace closing braces do not receive generated comments.
+namespace Example
+{
+	int first;
+	int second;
+	int third;
+}
