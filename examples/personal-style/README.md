@@ -29,12 +29,18 @@ a diff or diagnostic and return status 1. Line endings are normalized for compar
 
 To apply the sample elsewhere, copy `.clang-format` into the project's root or
 pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
-pointers and references, and indented namespace contents. Empty blocks may stay
+pointers and references, and indented namespace contents.
+Nonempty braced initializers use interior spaces, as in `int x{ 0 };`
+and `int values[]{ 1, 2, 3 };`, via `Cpp11BracedListStyle: Block`. Empty
+initializers remain `{}`. Wrapped initializer lists use block indentation and
+put the closing brace on its own line. Empty blocks may stay
 on one line; function bodies are expanded. Short lambdas may stay on one line
 within the 120-column limit. Multiline lambda braces align with the enclosing
 statement. Function calls keep arguments together when they fit; wrapped calls
 use one argument per line, aligned with the first argument beside the function
-name when it fits there. Constructor
+name when it fits there. Function declarations and definitions likewise keep
+parameters together when they fit and use one parameter per line when wrapped.
+Constructor
 initializer lists keep the colon on the signature line and put each initializer
 on its own line, indented four columns. Function definitions put return types
 on their own line; declarations keep the return type and function name together

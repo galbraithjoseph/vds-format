@@ -41,3 +41,12 @@ void xxx::callbacks(){x([this]{});x([this]{run();});m_cvThread.wait(lock, [this]
 void arguments(){x(1,2,3,504);x(firstLongReadinessConditionIsSatisfied(),secondLongReadinessConditionIsSatisfied(),firstLongReadinessConditionIsSatisfied(),504);}
 
 void assertionSpacing() { ASSERT(expression); VERIFY(expression); x(y); }
+
+// Nonempty braced initializers have spaces inside the braces.
+void bracedInitializers(){int x{0};int values[]{1,2,3};int empty{};}
+
+// Parameters stay compact until wrapping is needed, then use one per line.
+void shortParameters(int first,int second,int third);
+void wrappedParameters(int firstParameterWithALongName,int secondParameterWithALongName,int thirdParameterWithALongName,int fourth);
+void wrappedDefinition(int firstParameterWithALongName,int secondParameterWithALongName,int thirdParameterWithALongName,int fourth) { run(); }
+void functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemTogetherEvenThoughTheyWouldFitThereTogether(int a,int b,int c);
