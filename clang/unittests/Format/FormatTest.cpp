@@ -17,6 +17,39 @@ namespace {
 
 class FormatTest : public test::FormatTestBase {};
 
+TEST_F(FormatTest, SelectiveInnerParenthesisSpacing) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  Style.SpacesInParensOptions.ExceptForLoops = true;
+  Style.SpacesInParensOptions.InNamedCalls = {"ASSERT", "VERIFY"};
+  verifyFormat("if ( ready )\n  ASSERT( expression );", Style);
+  verifyFormat("while ( ready )\n  x(y);", Style);
+  verifyFormat("for (int i = 0; i < n; ++i)\n  VERIFY( x(y) );", Style);
+  verifyFormat("for (;;)\n  x(y);", Style);
+  verifyFormat("for (auto x : values)\n  ASSERT( x );", Style);
+  verifyFormat("void f() { ns::ASSERT( x(y) ); }", Style);
+  verifyFormat("void f() { object.VERIFY( x ); }", Style);
+  verifyFormat("void ASSERT(int x);", Style);
+  verifyFormat("void ASSERT(int x) {}", Style);
+  verifyFormat("#define ASSERT(x) x", Style);
+  verifyFormat("void f() { ASSERT(); }", Style);
+  verifyFormat("void f() { ASSERT( (x) ); }", Style);
+  verifyFormat("void f() { ASSERT( /*comment*/ x ); }", Style);
+  verifyFormat("void f() { assert(x); }", Style);
+  Style.ColumnLimit = 25;
+  verifyFormat(
+      "void f() {\n  ASSERT(\n      longExpression +\n      otherExpression );\n}",
+      Style);
+  Style.ColumnLimit = 80;
+  Style.SpacesInParensOptions.ExceptDoubleParentheses = true;
+  verifyFormat("void f() { ASSERT((x)); }", Style);
+  Style.SpacesInParensOptions.InEmptyParentheses = true;
+  verifyFormat("void f( ) { ASSERT( ); }", Style);
+  Style.SpacesInParensOptions.Other = true;
+  verifyFormat("for (x = f( y ); x; ++x)\n  g( x );", Style);
+}
+
 TEST_F(FormatTest, MessUp) {
   EXPECT_EQ("1 2 3", messUp("1 2 3"));
   EXPECT_EQ("1 2 3", messUp("1\n2\n3"));

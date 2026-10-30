@@ -5921,6 +5921,16 @@ struct FormatStyle {
     ///    while ( i < 5 )  { ... }               while (i < 5) { ... }
     /// \endcode
     bool InConditionalStatements;
+    /// Omit inner spaces in traditional and range-based for headers, overriding
+    /// InConditionalStatements and Other. Empty parentheses still follow
+    /// InEmptyParentheses. Applies only with SpacesInParens: Custom.
+    bool ExceptForLoops = false;
+    /// Insert inner spaces in calls whose final identifier exactly matches an
+    /// entry (case sensitive), including qualified/member calls. Declarations
+    /// and macro definitions are excluded. Overrides Other; empty calls follow
+    /// InEmptyParentheses and ExceptDoubleParentheses takes precedence.
+    /// Spacing before the opening parenthesis is configured independently.
+    std::vector<std::string> InNamedCalls;
     /// Put a space in C style casts.
     /// \code
     ///   true:                                  false:
@@ -5961,6 +5971,8 @@ struct FormatStyle {
     bool operator==(const SpacesInParensCustom &R) const {
       return ExceptDoubleParentheses == R.ExceptDoubleParentheses &&
              InConditionalStatements == R.InConditionalStatements &&
+             ExceptForLoops == R.ExceptForLoops &&
+             InNamedCalls == R.InNamedCalls &&
              InCStyleCasts == R.InCStyleCasts &&
              InEmptyParentheses == R.InEmptyParentheses && Other == R.Other;
     }

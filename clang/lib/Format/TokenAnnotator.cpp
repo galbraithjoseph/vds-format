@@ -4747,6 +4747,18 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       LeftParen = &Left;
     else if (Right.is(tok::r_paren) && Right.MatchingParen)
       LeftParen = Right.MatchingParen;
+    if (LeftParen && LeftParen->Previous) {
+      const auto *Name = LeftParen->Previous;
+      if (Style.SpacesInParensOptions.ExceptForLoops && Name->is(tok::kw_for))
+        return false;
+      if (!Line.InPPDirective && Name->is(tok::identifier) &&
+          LeftParen->isNot(TT_FunctionDeclarationLParen) &&
+          Name->isNot(TT_FunctionDeclarationName) &&
+          llvm::is_contained(Style.SpacesInParensOptions.InNamedCalls,
+                             Name->TokenText)) {
+        return true;
+      }
+    }
     if (LeftParen && (LeftParen->is(TT_ConditionLParen) ||
                       (LeftParen->Previous &&
                        isKeywordWithCondition(*LeftParen->Previous)))) {
