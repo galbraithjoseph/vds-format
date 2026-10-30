@@ -1,16 +1,10 @@
 // Function declarations: stock clang-format does not add tilde separators.
-void
-prepare();
-void
-run();
-void
-wait();
-void
-step(int index);
-bool
-firstLongReadinessConditionIsSatisfied();
-bool
-secondLongReadinessConditionIsSatisfied();
+void prepare();
+void run();
+void wait();
+void step(int index);
+bool firstLongReadinessConditionIsSatisfied();
+bool secondLongReadinessConditionIsSatisfied();
 
 // Simple if/else: optional braces can be removed.
 void

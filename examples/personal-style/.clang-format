@@ -12,7 +12,7 @@ PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
 BreakTemplateDeclarations: Yes
-BreakAfterReturnType: All
+BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
 MaxEmptyLinesToKeep: 2
 ColumnLimit: 80
