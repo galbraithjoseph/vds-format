@@ -77,10 +77,12 @@ TEST(ConfigParseTest, GetsPredefinedStyleByName) {
 TEST(ConfigParseTest, SelectiveInnerParenthesisSpacing) {
   auto Style = getLLVMStyle();
   EXPECT_FALSE(Style.SpacesInParensOptions.ExceptForLoops);
+  EXPECT_FALSE(Style.SpacesInParensOptions.ExceptSwitchStatements);
   EXPECT_TRUE(Style.SpacesInParensOptions.InNamedCalls.empty());
   EXPECT_EQ(0, parseConfiguration(
                    "SpacesInParens: Custom\nSpacesInParensOptions: "
-                   "{ExceptForLoops: true, InNamedCalls: [ASSERT, VERIFY]}",
+                   "{ExceptForLoops: true, ExceptSwitchStatements: true, "
+                   "InNamedCalls: [ASSERT, VERIFY]}",
                    &Style).value());
   auto RoundTrip = getLLVMStyle();
   EXPECT_EQ(0, parseConfiguration(configurationAsText(Style), &RoundTrip).value());
@@ -344,6 +346,7 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, InEmptyParentheses);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, Other);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptForLoops);
+  CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptSwitchStatements);
   const std::vector<std::string> NamedCalls = {"ASSERT", "VERIFY"};
   CHECK_PARSE("SpacesInParensOptions: {InNamedCalls: [ASSERT, VERIFY]}",
               SpacesInParensOptions.InNamedCalls, NamedCalls);

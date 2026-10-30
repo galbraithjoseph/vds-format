@@ -36,6 +36,7 @@ SpacesInParens: Custom
 SpacesInParensOptions:
   InConditionalStatements: true
   ExceptForLoops: true
+  ExceptSwitchStatements: true
   InNamedCalls: [ASSERT, VERIFY]
   InCStyleCasts: false
   InEmptyParentheses: false

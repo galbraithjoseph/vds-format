@@ -160,3 +160,17 @@ functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemToget
 	int a,
 	int b,
 	int c);
+
+void
+switchSpacing(int value)
+{
+	switch (value)
+	{
+	case 0:
+		ASSERT( value );
+		break;
+	default:
+		VERIFY( value );
+		break;
+	}
+}

@@ -8423,6 +8423,11 @@ Under `SpacesInParensOptions`, with `SpacesInParens: Custom`:
   and range-based `for` headers, overriding `InConditionalStatements` and `Other`.
   Ordinary token and semicolon spacing remains unchanged. Other controls keep
   their existing behavior. This applies to for headers in supported languages.
+* `ExceptSwitchStatements` (Boolean, default `false`) omits inner spaces in
+  `switch` conditions, overriding `InConditionalStatements` and `Other`.
+  It produces `switch (x)` with `SpaceBeforeParens: ControlStatements`.
+  Nested parentheses retain their own spacing rules. It applies to switch
+  statements in supported languages, including C++ initializer conditions.
 * `InNamedCalls` (list of strings, default `[]`) inserts inner spaces for calls
   whose final identifier matches an entry exactly and case sensitively. Thus
   `ASSERT` matches `ASSERT(x)`, `ns::ASSERT(x)`, and `object.ASSERT(x)`.
@@ -8430,7 +8435,7 @@ Under `SpacesInParensOptions`, with `SpacesInParens: Custom`:
   and the existing conditional classification for matching macro calls.
 
 `InEmptyParentheses` controls empty parentheses, and
-`ExceptDoubleParentheses` takes precedence over both extensions. These options
+`ExceptDoubleParentheses` takes precedence over these extensions. These options
 never change spacing before the opening parenthesis. Existing configurations
 retain their behavior.
 
@@ -8439,6 +8444,7 @@ SpacesInParens: Custom
 SpacesInParensOptions:
   InConditionalStatements: true
   ExceptForLoops: true
+  ExceptSwitchStatements: true
   InNamedCalls: [ASSERT]
   Other: false
 ```

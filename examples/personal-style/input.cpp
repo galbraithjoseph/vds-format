@@ -50,3 +50,5 @@ void shortParameters(int first,int second,int third);
 void wrappedParameters(int firstParameterWithALongName,int secondParameterWithALongName,int thirdParameterWithALongName,int fourth);
 void wrappedDefinition(int firstParameterWithALongName,int secondParameterWithALongName,int thirdParameterWithALongName,int fourth) { run(); }
 void functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemTogetherEvenThoughTheyWouldFitThereTogether(int a,int b,int c);
+
+void switchSpacing(int value) { switch ( value ) { case 0: ASSERT(value); break; default: VERIFY(value); break; } }
