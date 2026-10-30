@@ -49,7 +49,9 @@ on their own line; declarations keep the return type and function name together
 when they fit within the column limit. Template declarations use
 `template<class X>` spacing and always break before the following declaration.
 Up to two consecutive blank lines are
-preserved. Other unspecified settings inherit LLVM defaults.
+preserved. Trailing `//` comments preserve the existing tabs and spaces between code and
+comment via `AlignTrailingComments: { Kind: Leave }`. Other unspecified settings
+inherit LLVM defaults.
 `input.cpp` and `expected.cpp` are formatting fixtures with external
 function declarations, not complete programs.
 

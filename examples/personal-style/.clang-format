@@ -18,6 +18,8 @@ BreakTemplateDeclarations: Yes
 BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
 MaxEmptyLinesToKeep: 2
+AlignTrailingComments:
+  Kind: Leave
 ColumnLimit: 120
 FunctionDeclarationSeparatorColumn: 80
 PackArguments:

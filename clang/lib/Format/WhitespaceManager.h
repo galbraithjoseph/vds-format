@@ -159,6 +159,8 @@ public:
     // \c EscapedNewlineColumn will be calculated in
     // \c calculateLineBreakInformation.
     bool IsTrailingComment;
+    // Exact horizontal gap retained by AlignTrailingComments: Leave.
+    bool PreserveCommentWhitespace = false;
     unsigned TokenLength;
     unsigned PreviousEndOfTokenColumn;
     unsigned EscapedNewlineColumn;

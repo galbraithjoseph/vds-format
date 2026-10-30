@@ -242,3 +242,8 @@ protected:
 private:
 	void reset();
 };
+
+// Trailing comments keep their original tabs and spaces.
+int firstComment;	// First.
+int secondComment;		// Second.
+int mixedComment; 	  // Mixed spacing.
