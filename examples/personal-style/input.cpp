@@ -28,3 +28,8 @@ void counting(int count){for(int index=0;index<count;++index){step(index);}}
 
 // Constructor initializers: colon on the signature, one initializer per line.
 x::x() : a(2), b(3), c(4) {}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void xxx::Shutdown() {}
+
+template<class X> blah xxx<X>::fooy() {}

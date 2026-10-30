@@ -1,13 +1,20 @@
 // Function declarations: stock clang-format does not add tilde separators.
-void prepare();
-void run();
-void wait();
-void step(int index);
-bool firstLongReadinessConditionIsSatisfied();
-bool secondLongReadinessConditionIsSatisfied();
+void
+prepare();
+void
+run();
+void
+wait();
+void
+step(int index);
+bool
+firstLongReadinessConditionIsSatisfied();
+bool
+secondLongReadinessConditionIsSatisfied();
 
 // Simple if/else: optional braces can be removed.
-void simple(bool ready)
+void
+simple(bool ready)
 {
 	if ( ready )
 		run();
@@ -16,7 +23,8 @@ void simple(bool ready)
 }
 
 // A multi-statement branch requires braces throughout the chain.
-void mixedBranches(bool ready)
+void
+mixedBranches(bool ready)
 {
 	if ( ready )
 	{
@@ -30,7 +38,8 @@ void mixedBranches(bool ready)
 }
 
 // A wrapped condition requires braces around both single-statement bodies.
-void wrappedCondition()
+void
+wrappedCondition()
 {
 	if ( firstLongReadinessConditionIsSatisfied() &&
 		 secondLongReadinessConditionIsSatisfied() )
@@ -44,7 +53,8 @@ void wrappedCondition()
 }
 
 // The chain decision includes all else-if branches, including mixed input.
-void chained(bool ready, bool retry)
+void
+chained(bool ready, bool retry)
 {
 	if ( ready )
 	{
@@ -62,7 +72,8 @@ void chained(bool ready, bool retry)
 }
 
 // Spacing after ! and inside while parentheses.
-void polling(bool bStopped)
+void
+polling(bool bStopped)
 {
 	while ( ! bStopped )
 	{
@@ -72,7 +83,8 @@ void polling(bool bStopped)
 }
 
 // Stock conditional-parenthesis spacing also affects for headers.
-void counting(int count)
+void
+counting(int count)
 {
 	for ( int index = 0; index < count; ++index )
 		step(index);
@@ -83,5 +95,17 @@ x::x() :
 	a(2),
 	b(3),
 	c(4)
+{
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void
+xxx::Shutdown()
+{
+}
+
+template<class X>
+blah
+xxx<X>::fooy()
 {
 }

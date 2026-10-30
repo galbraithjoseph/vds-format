@@ -32,8 +32,10 @@ pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
 pointers and references, and indented namespace contents. Empty blocks and
 empty lambdas may stay on one line; function bodies are expanded. Constructor
 initializer lists keep the colon on the signature line and put each initializer
-on its own line, indented four columns. Template declarations always
-break before the following declaration. Up to two consecutive blank lines are
+on its own line, indented four columns. Return types appear on their own line
+for both function declarations and definitions. Template declarations use
+`template<class X>` spacing and always break before the following declaration.
+Up to two consecutive blank lines are
 preserved. Other unspecified settings inherit LLVM defaults.
 `input.cpp` and `expected.cpp` are formatting fixtures with external
 function declarations, not complete programs.
