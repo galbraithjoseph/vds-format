@@ -54,7 +54,8 @@ when they fit within the column limit. Template declarations use
 concept declarations. Short concepts stay on one line. Requires expressions
 after logical operators start at the declaration indentation on a new line.
 A requires expression directly after `=` stays on the same line when its header
-fits. Requires braces stay on separate lines. If the remaining
+fits. Requires braces stay on separate lines. The required break before `requires`
+does not force preceding logical operands to split when they fit together. If the remaining
 concept declaration is too long, it first wraps after `concept`, before the
 name, without an extra continuation indent. Only constraints that still do not fit split their logical operands onto
 separate lines, aligned with the first operand. Operators end the preceding

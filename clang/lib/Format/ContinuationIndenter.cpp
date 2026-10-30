@@ -155,7 +155,8 @@ static unsigned getChainLength(const FormatToken &Op) {
 
 // Returns \c true if \c Current is a binary operation that must break.
 static bool mustBreakBinaryOperation(const FormatToken &Current,
-                                     const FormatStyle &Style) {
+                                     const FormatStyle &Style,
+                                     const LineState &State) {
   if (!Current.CanBreakBefore)
     return false;
 
@@ -173,6 +174,35 @@ static bool mustBreakBinaryOperation(const FormatToken &Current,
       return false;
   } else if (!startsNextOperand(Current)) {
     return false;
+  }
+
+  // A requires expression has its own mandatory line break. That does not
+  // make the preceding concept constraints a wrapped logical expression if
+  // they fit together, either after the header or after a concept-name break.
+  if (Style.BreakBeforeRequiresExpression &&
+      OpToken->isOneOf(tok::ampamp, tok::pipepipe)) {
+    const auto *LastOp = OpToken;
+    while (LastOp->NextOperator)
+      LastOp = LastOp->NextOperator;
+    const auto *LastOperand = LastOp->getNextNonComment();
+    if (LastOperand && LastOperand->is(TT_RequiresExpression)) {
+      const FormatToken *SegmentFirst = State.Line->First;
+      bool Concept = false;
+      for (auto *Tok = State.Line->First; Tok && Tok != LastOp; Tok = Tok->Next) {
+        if (Tok->is(tok::kw_concept) && Tok->Next) {
+          Concept = true;
+          if (Tok->Next->MustBreakBefore)
+            SegmentFirst = Tok->Next;
+          break;
+        }
+      }
+      if (Concept &&
+          (Style.ColumnLimit == 0 ||
+           State.FirstIndent + LastOp->TotalLength - SegmentFirst->TotalLength +
+                   SegmentFirst->ColumnWidth <=
+               Style.ColumnLimit))
+        return false;
+    }
   }
 
   // Look up per-operator rule or fall back to Default.
@@ -1042,7 +1072,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   }
   if (CurrentState.AvoidBinPacking && startsNextParameter(Current, Style))
     CurrentState.NoLineBreak = true;
-  if (mustBreakBinaryOperation(Current, Style))
+  if (mustBreakBinaryOperation(Current, Style, State))
     CurrentState.NoLineBreak = true;
 
   if (startsSegmentOfBuilderTypeCall(Current) &&
@@ -1467,7 +1497,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     }
   }
 
-  if (mustBreakBinaryOperation(Current, Style))
+  if (mustBreakBinaryOperation(Current, Style, State))
     CurrentState.BreakBeforeParameter = true;
 
   return Penalty;

@@ -212,8 +212,8 @@ TEST_F(FormatTest, RequiresExpressionsAtDeclarationIndent) {
   Style.BreakBinaryOperations.PerOperator = {
       {{tok::ampamp, tok::pipepipe}, FormatStyle::BBO_OnePerLine, 0}};
   const std::string Expected =
-      "template<class T, class C> concept CompatibleLsaString = LsaString<T> &&\n"
-      "                                                         StringCharacter<C> &&\n"
+      "template<class T, class C> concept CompatibleLsaString = "
+      "LsaString<T> && StringCharacter<C> &&\n"
       "requires(T &value)\n"
       "{\n"
       "  { value.Buffer } -> std::same_as<C *&>;\n"
@@ -223,6 +223,28 @@ TEST_F(FormatTest, RequiresExpressionsAtDeclarationIndent) {
       "StringCharacter<C> && requires(T& value) { "
       "{ value.Buffer } -> std::same_as<C*&>; };", Style));
   EXPECT_EQ(Expected, format(Expected, Style));
+  Style.ColumnLimit = 90;
+  const std::string HeaderWrapped =
+      "template<class T, class C> concept\n"
+      "CompatibleLsaString = LsaString<T> && StringCharacter<C> &&\n"
+      "requires(T &value)\n"
+      "{\n"
+      "  { value.Buffer } -> std::same_as<C *&>;\n"
+      "};";
+  EXPECT_EQ(HeaderWrapped, format(Expected, Style));
+  EXPECT_EQ(HeaderWrapped, format(HeaderWrapped, Style));
+  Style.ColumnLimit = 50;
+  const std::string LogicalWrapped =
+      "template<class T, class C> concept\n"
+      "CompatibleLsaString = LsaString<T> &&\n"
+      "                      StringCharacter<C> &&\n"
+      "requires(T &value)\n"
+      "{\n"
+      "  { value.Buffer } -> std::same_as<C *&>;\n"
+      "};";
+  EXPECT_EQ(LogicalWrapped, format(Expected, Style));
+  EXPECT_EQ(LogicalWrapped, format(LogicalWrapped, Style));
+  Style.ColumnLimit = 120;
   const std::string Inline =
       "template<class S> concept StringLike = requires(const S &source)\n"
       "{\n"

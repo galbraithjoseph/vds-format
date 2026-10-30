@@ -319,8 +319,7 @@ template<class T> concept
 MediumLengthConceptWithAdditionalDescription = std::same_as<T, UNICODE_STRING> || std::same_as<T, LSA_UNICODE_STRING>;
 
 // Requires expressions after logical operators return to declaration indentation.
-template<class T, class C> concept CompatibleLsaString = LsaString<T> &&
-														 StringCharacter<C> &&
+template<class T, class C> concept CompatibleLsaString = LsaString<T> && StringCharacter<C> &&
 requires(T& value)
 {
 	{ value.Buffer } -> std::same_as<C*&>;
