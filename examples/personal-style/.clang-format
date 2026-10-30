@@ -15,11 +15,12 @@ BreakTemplateDeclarations: Yes
 BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
 MaxEmptyLinesToKeep: 2
-ColumnLimit: 80
+ColumnLimit: 120
 BreakBeforeBraces: Allman
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: None
-AllowShortLambdasOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: All
+LambdaBodyIndentation: OuterScope
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 SpaceBeforeParens: ControlStatements

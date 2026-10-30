@@ -35,8 +35,8 @@ mixedBranches(bool ready)
 void
 wrappedCondition()
 {
-	if ( firstLongReadinessConditionIsSatisfied() &&
-		 secondLongReadinessConditionIsSatisfied() )
+	if ( firstLongReadinessConditionIsSatisfied() && secondLongReadinessConditionIsSatisfied() &&
+		 firstLongReadinessConditionIsSatisfied() )
 	{
 		run();
 	}
@@ -102,4 +102,13 @@ template<class X>
 blah
 xxx<X>::fooy()
 {
+}
+
+// Short lambdas stay inline when they fit within the column limit.
+void
+xxx::callbacks()
+{
+	x([this] {});
+	x([this] { run(); });
+	m_cvThread.wait(lock, [this] { return m_bThreadExit || m_bSystemTimerReceived; });
 }

@@ -15,7 +15,7 @@ wait();
 void mixedBranches(bool ready){if(ready){prepare();run();}else wait();}
 
 // A wrapped condition requires braces around both single-statement bodies.
-void wrappedCondition(){if(firstLongReadinessConditionIsSatisfied()&&secondLongReadinessConditionIsSatisfied())run();else wait();}
+void wrappedCondition(){if(firstLongReadinessConditionIsSatisfied()&&secondLongReadinessConditionIsSatisfied()&&firstLongReadinessConditionIsSatisfied())run();else wait();}
 
 // The chain decision includes all else-if branches, including mixed input.
 void chained(bool ready,bool retry){if(ready)run();else if(retry){prepare();run();}else wait();}
@@ -33,3 +33,6 @@ x::x() : a(2), b(3), c(4) {}
 void xxx::Shutdown() {}
 
 template<class X> blah xxx<X>::fooy() {}
+
+// Short lambdas stay inline when they fit within the column limit.
+void xxx::callbacks(){x([this]{});x([this]{run();});m_cvThread.wait(lock, [this] { return m_bThreadExit || m_bSystemTimerReceived; });}

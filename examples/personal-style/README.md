@@ -29,8 +29,10 @@ a diff or diagnostic and return status 1. Line endings are normalized for compar
 
 To apply the sample elsewhere, copy `.clang-format` into the project's root or
 pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
-pointers and references, and indented namespace contents. Empty blocks and
-empty lambdas may stay on one line; function bodies are expanded. Constructor
+pointers and references, and indented namespace contents. Empty blocks may stay
+on one line; function bodies are expanded. Short lambdas may stay on one line
+within the 120-column limit. Multiline lambda braces align with the enclosing
+statement. Constructor
 initializer lists keep the colon on the signature line and put each initializer
 on its own line, indented four columns. Function definitions put return types
 on their own line; declarations keep the return type and function name together
@@ -54,7 +56,7 @@ BreakBeforeBraces: Allman
 - `simple` removes optional braces from both single-statement branches.
 - `mixedBranches` and `chained` brace every branch because one branch contains
   two statements. An else-if stays an else-if.
-- `wrappedCondition` forces a condition to wrap at `ColumnLimit: 80` and braces
+- `wrappedCondition` forces a condition to wrap at `ColumnLimit: 120` and braces
   both single-statement branches.
 - `polling` retains its two-statement while body; `counting` removes the optional
   braces around its single statement.
