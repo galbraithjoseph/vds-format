@@ -89,12 +89,6 @@ remove them safely.
 
 ## Remaining differences
 
-### For spacing — [issue #3](https://github.com/galbraithjoseph/vds-format/issues/3)
-
-`SpacesInParensOptions.InConditionalStatements` still groups `for` with `if`
-and `while`. The fixture produces `for ( int index = 0; index < count; ++index )`,
-while the requested style is `for (int index = 0; index < count; ++index)`.
-
 ### Function separators — [issue #4](https://github.com/galbraithjoseph/vds-format/issues/4)
 
 Function declarations and definitions do not yet receive a generated `//`
@@ -105,3 +99,20 @@ The previous stock-only baseline from #1 was verified with clang-format 17.0.6
 and 23.1.3. Its `RemoveBracesLLVM` approximation left single-statement branches
 unbraced beside multi-statement branches and did not add braces for wrapped
 conditions. The current fixtures exercise the implemented policy instead.
+
+## Selective parenthesis spacing (issue #3)
+
+With `SpacesInParens: Custom`, `ExceptForLoops: true` overrides
+`InConditionalStatements` and `Other` for traditional and range-based for
+headers. The sample now produces `for (int index = 0; index < count; ++index)`
+alongside spaced if/while conditions.
+
+`InNamedCalls: [ASSERT, VERIFY]` produces `ASSERT( expression );` and
+`VERIFY( expression );` while ordinary calls
+remain `x(y)`. Names match the final identifier exactly and case sensitively,
+including qualified/member calls. Declarations and preprocessor directives are
+excluded. Empty calls follow `InEmptyParentheses`; `ExceptDoubleParentheses`
+takes precedence. Spacing before parentheses is unchanged. Both options are
+opt-in and ignored unless `SpacesInParens: Custom` is enabled. Other control
+statements retain their existing conditional spacing; the for exception also
+applies to for headers in other supported languages.

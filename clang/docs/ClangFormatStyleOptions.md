@@ -8414,3 +8414,40 @@ void test()
     }
 }
 ```
+
+### Selective inner-parenthesis spacing (fork extension)
+
+Under `SpacesInParensOptions`, with `SpacesInParens: Custom`:
+
+* `ExceptForLoops` (Boolean, default `false`) omits inner spaces in traditional
+  and range-based `for` headers, overriding `InConditionalStatements` and `Other`.
+  Ordinary token and semicolon spacing remains unchanged. Other controls keep
+  their existing behavior. This applies to for headers in supported languages.
+* `InNamedCalls` (list of strings, default `[]`) inserts inner spaces for calls
+  whose final identifier matches an entry exactly and case sensitively. Thus
+  `ASSERT` matches `ASSERT(x)`, `ns::ASSERT(x)`, and `object.ASSERT(x)`.
+  Declarations and preprocessor directives are excluded. This overrides `Other`
+  and the existing conditional classification for matching macro calls.
+
+`InEmptyParentheses` controls empty parentheses, and
+`ExceptDoubleParentheses` takes precedence over both extensions. These options
+never change spacing before the opening parenthesis. Existing configurations
+retain their behavior.
+
+```yaml
+SpacesInParens: Custom
+SpacesInParensOptions:
+  InConditionalStatements: true
+  ExceptForLoops: true
+  InNamedCalls: [ASSERT]
+  Other: false
+```
+
+```cpp
+if ( condition )
+  ASSERT( expression );
+while ( condition )
+  x(y);
+for (int i = 0; i < n; ++i)
+  ASSERT( x(i) );
+```

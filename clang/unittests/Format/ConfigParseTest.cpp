@@ -74,6 +74,19 @@ TEST(ConfigParseTest, GetsPredefinedStyleByName) {
   EXPECT_FALSE(getPredefinedStyle("qwerty", FormatStyle::LK_Cpp, &Styles[0]));
 }
 
+TEST(ConfigParseTest, SelectiveInnerParenthesisSpacing) {
+  auto Style = getLLVMStyle();
+  EXPECT_FALSE(Style.SpacesInParensOptions.ExceptForLoops);
+  EXPECT_TRUE(Style.SpacesInParensOptions.InNamedCalls.empty());
+  EXPECT_EQ(0, parseConfiguration(
+                   "SpacesInParens: Custom\nSpacesInParensOptions: "
+                   "{ExceptForLoops: true, InNamedCalls: [ASSERT, VERIFY]}",
+                   &Style).value());
+  auto RoundTrip = getLLVMStyle();
+  EXPECT_EQ(0, parseConfiguration(configurationAsText(Style), &RoundTrip).value());
+  EXPECT_EQ(Style, RoundTrip);
+}
+
 TEST(ConfigParseTest, ControlStatementBraces) {
   using Policy = FormatStyle::ControlStatementBracesStyle;
   auto Style = getLLVMStyle();
@@ -330,6 +343,10 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, InConditionalStatements);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, InEmptyParentheses);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, Other);
+  CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptForLoops);
+  const std::vector<std::string> NamedCalls = {"ASSERT", "VERIFY"};
+  CHECK_PARSE("SpacesInParensOptions: {InNamedCalls: [ASSERT, VERIFY]}",
+              SpacesInParensOptions.InNamedCalls, NamedCalls);
   CHECK_PARSE_NESTED_BOOL(SortIncludes, Enabled);
   CHECK_PARSE_NESTED_BOOL(SortIncludes, FilesBeforeFolders);
   CHECK_PARSE_NESTED_BOOL(SortIncludes, IgnoreCase);

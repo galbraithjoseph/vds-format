@@ -39,3 +39,5 @@ void xxx::callbacks(){x([this]{});x([this]{run();});m_cvThread.wait(lock, [this]
 
 // Calls stay compact until wrapping is needed, then use one argument per line.
 void arguments(){x(1,2,3,504);x(firstLongReadinessConditionIsSatisfied(),secondLongReadinessConditionIsSatisfied(),firstLongReadinessConditionIsSatisfied(),504);}
+
+void assertionSpacing() { ASSERT(expression); VERIFY(expression); x(y); }

@@ -80,7 +80,7 @@ polling(bool bStopped)
 void
 counting(int count)
 {
-	for ( int index = 0; index < count; ++index )
+	for (int index = 0; index < count; ++index)
 		step(index);
 }
 
@@ -122,4 +122,12 @@ arguments()
 	  secondLongReadinessConditionIsSatisfied(),
 	  firstLongReadinessConditionIsSatisfied(),
 	  504);
+}
+
+void
+assertionSpacing()
+{
+	ASSERT( expression );
+	VERIFY( expression );
+	x(y);
 }
