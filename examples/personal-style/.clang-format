@@ -16,6 +16,10 @@ BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
 MaxEmptyLinesToKeep: 2
 ColumnLimit: 120
+PackArguments:
+  BinPack: OnePerLine
+AllowAllArgumentsOnNextLine: false
+AlignAfterOpenBracket: true
 BreakBeforeBraces: Allman
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: None

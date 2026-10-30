@@ -32,7 +32,9 @@ pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
 pointers and references, and indented namespace contents. Empty blocks may stay
 on one line; function bodies are expanded. Short lambdas may stay on one line
 within the 120-column limit. Multiline lambda braces align with the enclosing
-statement. Constructor
+statement. Function calls keep arguments together when they fit; wrapped calls
+use one argument per line, aligned with the first argument beside the function
+name when it fits there. Constructor
 initializer lists keep the colon on the signature line and put each initializer
 on its own line, indented four columns. Function definitions put return types
 on their own line; declarations keep the return type and function name together

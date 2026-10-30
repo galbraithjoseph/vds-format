@@ -36,3 +36,6 @@ template<class X> blah xxx<X>::fooy() {}
 
 // Short lambdas stay inline when they fit within the column limit.
 void xxx::callbacks(){x([this]{});x([this]{run();});m_cvThread.wait(lock, [this] { return m_bThreadExit || m_bSystemTimerReceived; });}
+
+// Calls stay compact until wrapping is needed, then use one argument per line.
+void arguments(){x(1,2,3,504);x(firstLongReadinessConditionIsSatisfied(),secondLongReadinessConditionIsSatisfied(),firstLongReadinessConditionIsSatisfied(),504);}
