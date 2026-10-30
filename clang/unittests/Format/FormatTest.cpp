@@ -155,6 +155,21 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   EXPECT_EQ(Nested, format(Nested, Style));
 }
 
+TEST_F(FormatTest, SpaceBeforeLambdaParameters) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;
+  Style.SpaceBeforeParensOptions.AfterLambdaCaptureList = true;
+  verifyFormat("auto f = [x] (int y) { return x + y; };",
+               "auto f=[x](int y){return x+y;};", Style);
+  verifyFormat("auto f = [] () {};", "auto f=[](){};", Style);
+  verifyFormat("auto f = []<class T> (T x) { return x; };", Style);
+  verifyFormat("void f(int x) {}", Style);
+  verifyFormat("void f(int x);", Style);
+  verifyFormat("void f() { g(x); }", Style);
+  Style.SpaceBeforeParensOptions.AfterLambdaCaptureList = false;
+  verifyFormat("auto f = [x](int y) { return x + y; };", Style);
+}
+
 TEST_F(FormatTest, SelectiveInnerParenthesisSpacing) {
   FormatStyle Style = getLLVMStyle();
   Style.SpacesInParens = FormatStyle::SIPO_Custom;
@@ -3192,13 +3207,13 @@ TEST_F(FormatTest, ShortEnums) {
                Style);
 
   Style.AllowShortEnumsOnASingleLine = true;
-  verifyFormat("export enum\n"
-               "{\n"
-               "  A,\n"
-               "  B,\n"
-               "  C\n"
-               "} ShortEnum1, ShortEnum2;",
-               Style);
+  verifyFormat("export enum { A, B, C } ShortEnum1, ShortEnum2;", Style);
+  verifyFormat("enum { CHUNK_SIZE = 64 };", Style);
+  verifyFormat("enum { CHUNK_SIZE = 64 };",
+               "enum\n{\n  CHUNK_SIZE = 64\n};", Style);
+  verifyFormat("enum\n{\n  A,\n  B,\n};", Style);
+  Style.ColumnLimit = 25;
+  verifyFormat("enum\n{\n  LONG_ENUM_VALUE = 12345\n};", Style);
 }
 
 TEST_F(FormatTest, ShortCompoundRequirement) {

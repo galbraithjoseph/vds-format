@@ -977,6 +977,7 @@ template <> struct MappingTraits<FormatStyle::SpaceBeforeParensCustom> {
     IO.mapOptional("AfterFunctionDeclarationName",
                    Spacing.AfterFunctionDeclarationName);
     IO.mapOptional("AfterIfMacros", Spacing.AfterIfMacros);
+    IO.mapOptional("AfterLambdaCaptureList", Spacing.AfterLambdaCaptureList);
     IO.mapOptional("AfterNot", Spacing.AfterNot);
     IO.mapOptional("AfterOverloadedOperator", Spacing.AfterOverloadedOperator);
     IO.mapOptional("AfterPlacementOperator", Spacing.AfterPlacementOperator);
@@ -4542,7 +4543,8 @@ reformat(const FormatStyle &Style, StringRef Code,
   default:
     break;
   }
-  if (Expanded.BraceWrapping.AfterEnum)
+  if (Expanded.BraceWrapping.AfterEnum &&
+      (!Expanded.isCpp() || Expanded.BreakBeforeBraces != FormatStyle::BS_Custom))
     Expanded.AllowShortEnumsOnASingleLine = false;
 
   if (Expanded.DisableFormat)

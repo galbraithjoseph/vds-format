@@ -38,7 +38,8 @@ Nonempty braced initializers use interior spaces, as in `int x{ 0 };`
 and `int values[]{ 1, 2, 3 };`, via `Cpp11BracedListStyle: Block`. Empty
 initializers remain `{}`. Wrapped initializer lists use block indentation and
 put the closing brace on its own line. Empty blocks may stay
-on one line; function bodies are expanded. Short lambdas may stay on one line
+on one line; function bodies are expanded. Lambda parameter lists have a leading space (`[captures] (args)`) via
+`SpaceBeforeParensOptions.AfterLambdaCaptureList`. Short lambdas may stay on one line
 within the 120-column limit. Multiline lambda braces align with the enclosing
 statement. Function calls keep arguments together when they fit; wrapped calls
 use one argument per line, aligned with the first argument beside the function
@@ -52,8 +53,9 @@ when they fit within the column limit. Template declarations use
 `template<class X>` spacing and always break before the following declaration.
 Up to two consecutive blank lines are
 preserved. Trailing `//` comments preserve the existing tabs and spaces between code and
-comment via `AlignTrailingComments: { Kind: Leave }`. Other unspecified settings
-inherit LLVM defaults.
+comment via `AlignTrailingComments: { Kind: Leave }`. C-style casts have a space before the expression via
+`SpaceAfterCStyleCast: true`, for example `(char**) foo`. Other unspecified
+settings inherit LLVM defaults.
 `input.cpp` and `expected.cpp` are formatting fixtures with external
 function declarations, not complete programs.
 
@@ -75,7 +77,7 @@ BreakBeforeBraces: Custom
 - `polling` retains its two-statement while body; `counting` removes the optional
   braces around its single statement.
 
-Brace placement follows Allman except for enum declarations. Conditions are checked after formatting a
+Brace placement follows Allman, including multiline enum declarations. Conditions are checked after formatting a
 canonical braced representation, including if initializers. Input line breaks
 alone do not trigger braces, and a single body statement spanning several lines
 is still one statement. With attached braces, a brace that forces condition
@@ -158,5 +160,5 @@ labels, braced cases, default blocks, and nested switches.
 `AllowShortEnumsOnASingleLine: true` keeps short enums such as
 `enum { TIMEOUT_INTERVAL = 4 };` on one line when they fit the column limit.
 The custom brace settings retain Allman placement elsewhere and set
-`BraceWrapping.AfterEnum: false`; longer enums also keep their opening brace
-on the declaration line.
+`BraceWrapping.AfterEnum: true`; multiline enums put their opening brace
+on its own line.

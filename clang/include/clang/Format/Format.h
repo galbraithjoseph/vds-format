@@ -5594,6 +5594,12 @@ struct FormatStyle {
     ///      <conditional-body>                     <conditional-body>
     /// \endcode
     bool AfterIfMacros;
+    /// If `true`, put a space before a lambda parameter list.
+    /// \code
+    ///   auto f = [capture] (int value) { return value; };
+    /// \endcode
+    /// \version 24
+    bool AfterLambdaCaptureList;
     /// If `true`, put a space between alternative operator `not` and the
     /// opening parenthesis.
     /// \code
@@ -5649,6 +5655,7 @@ struct FormatStyle {
         : AfterControlStatements(false), AfterForeachMacros(false),
           AfterFunctionDeclarationName(false),
           AfterFunctionDefinitionName(false), AfterIfMacros(false),
+          AfterLambdaCaptureList(false),
           AfterNot(false), AfterOverloadedOperator(false),
           AfterPlacementOperator(true), AfterRequiresInClause(false),
           AfterRequiresInExpression(false), BeforeNonEmptyParentheses(false) {}
@@ -5660,6 +5667,7 @@ struct FormatStyle {
                  Other.AfterFunctionDeclarationName &&
              AfterFunctionDefinitionName == Other.AfterFunctionDefinitionName &&
              AfterIfMacros == Other.AfterIfMacros &&
+             AfterLambdaCaptureList == Other.AfterLambdaCaptureList &&
              AfterNot == Other.AfterNot &&
              AfterOverloadedOperator == Other.AfterOverloadedOperator &&
              AfterPlacementOperator == Other.AfterPlacementOperator &&

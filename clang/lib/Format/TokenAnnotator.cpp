@@ -4401,6 +4401,33 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) const {
     }
   }
 
+  // Short enums may stay on one line even when multiline enums use Allman
+  // braces. Decide after measuring the complete declaration and its required
+  // breaks (including comments and trailing commas).
+  if (Style.isCpp() && Style.AllowShortEnumsOnASingleLine &&
+      Style.BraceWrapping.AfterEnum) {
+    for (auto *Tok = First; Tok; Tok = Tok->Next) {
+      if (!Tok->is(TT_EnumLBrace) || !Tok->MatchingParen)
+        continue;
+      bool MustWrap = Style.ColumnLimit > 0 &&
+                      Line.Level * Style.IndentWidth + Line.Last->TotalLength >
+                          Style.ColumnLimit;
+      for (auto *Body = Tok->Next; Body; Body = Body->Next) {
+        MustWrap |= Body->MustBreakBefore;
+        if (Body == Tok->MatchingParen)
+          break;
+      }
+      if (MustWrap) {
+        Tok->MustBreakBefore = Tok->CanBreakBefore = true;
+        if (Tok->Next && Tok->Next != Tok->MatchingParen)
+          Tok->Next->MustBreakBefore = Tok->Next->CanBreakBefore = true;
+        for (auto *Rest = Tok; Rest; Rest = Rest->Next)
+          Rest->TotalLength += Style.ColumnLimit;
+      }
+      break;
+    }
+  }
+
   calculateUnbreakableTailLengths(Line);
   unsigned IndentLevel = Line.Level;
   for (auto *Current = First; Current; Current = Current->Next) {
@@ -5053,6 +5080,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                  ? Options.AfterFunctionDefinitionName
                  : Options.AfterFunctionDeclarationName;
     }
+    if (Right.is(TT_LambdaDefinitionLParen) &&
+        Style.SpaceBeforeParensOptions.AfterLambdaCaptureList)
+      return true;
     if (Left.is(TT_TemplateCloser) && Right.isNot(TT_FunctionTypeLParen))
       return spaceRequiredBeforeParens(Right);
     if (Left.isOneOf(TT_RequiresClause,
@@ -6175,7 +6205,8 @@ bool TokenAnnotator::mustBreakBefore(AnnotatedLine &Line,
         FirstNonComment && (FirstNonComment->is(Keywords.kw_internal) ||
                             FirstNonComment->isAccessSpecifierKeyword());
 
-    if (Style.BraceWrapping.AfterEnum) {
+    if (Style.BraceWrapping.AfterEnum &&
+        !(Style.isCpp() && Style.AllowShortEnumsOnASingleLine)) {
       if (Line.startsWith(tok::kw_enum) ||
           Line.startsWith(tok::kw_typedef, tok::kw_enum) ||
           Line.startsWith(tok::kw_export, tok::kw_enum)) {

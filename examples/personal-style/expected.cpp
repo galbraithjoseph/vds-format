@@ -255,3 +255,32 @@ namespace Example
 	int second;
 	int third;
 }
+
+// Lambda parameters have a space after the capture list.
+auto capturedLambda = [value] (int argument) { return value + argument; };
+auto emptyLambda = [] () {};
+auto genericLambda = []<class T> (T value) { return value; };
+
+// Multiline enum braces use Allman placement.
+enum
+{
+	RUNDOWN_RECV_EOF = (1 << 0),
+	RUNDOWN_SENT_EOF = (1 << 1),
+	RUNDOWN_CLOSED = (1 << 2),
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void
+shortChunkEnum()
+{
+	enum { CHUNK_SIZE = 64 };
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// C-style casts have a space before the expression.
+void
+castSpacing(void* foo)
+{
+	consume((char**) foo);
+	consume((int) 42);
+}
