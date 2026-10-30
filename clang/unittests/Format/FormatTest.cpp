@@ -50,6 +50,29 @@ TEST_F(FormatTest, SelectiveInnerParenthesisSpacing) {
   verifyFormat("for (x = f( y ); x; ++x)\n  g( x );", Style);
 }
 
+TEST_F(FormatTest, SwitchInnerParenthesisSpacing) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  verifyFormat("switch ( x ) {\ndefault:\n  break;\n}", Style);
+  Style.SpacesInParensOptions.ExceptSwitchStatements = true;
+  verifyFormat("switch (x) {\ndefault:\n  break;\n}", Style);
+  verifyFormat("switch (f(x)) {\ndefault:\n  break;\n}", Style);
+  verifyFormat("switch (/*comment*/ x) {\ndefault:\n  break;\n}", Style);
+  verifyFormat("switch (int x = f(); x) {\ndefault:\n  break;\n}", Style);
+  verifyFormat("if ( x )\n  f();", Style);
+  verifyFormat("while ( x )\n  f();", Style);
+  verifyFormat("for ( ;; )\n  f();", Style);
+  Style.SpacesInParensOptions.Other = true;
+  verifyFormat("switch (( x )) {\ndefault:\n  break;\n}", Style);
+  Style.SpacesInParensOptions.ExceptDoubleParentheses = true;
+  verifyFormat("switch (( x )) {\ndefault:\n  break;\n}", Style);
+  Style.SpacesInParens = FormatStyle::SIPO_Never;
+  Style.SpacesInParensOptions = {};
+  Style.SpacesInParensOptions.ExceptSwitchStatements = true;
+  verifyFormat("switch (x) {\ndefault:\n  break;\n}", Style);
+}
+
 TEST_F(FormatTest, MessUp) {
   EXPECT_EQ("1 2 3", messUp("1 2 3"));
   EXPECT_EQ("1 2 3", messUp("1\n2\n3"));

@@ -5925,6 +5925,11 @@ struct FormatStyle {
     /// InConditionalStatements and Other. Empty parentheses still follow
     /// InEmptyParentheses. Applies only with SpacesInParens: Custom.
     bool ExceptForLoops = false;
+    /// Omit inner spaces in switch conditions, overriding
+    /// InConditionalStatements and Other. Empty parentheses still follow
+    /// InEmptyParentheses. Applies only with SpacesInParens: Custom and does
+    /// not change spacing before the opening parenthesis.
+    bool ExceptSwitchStatements = false;
     /// Insert inner spaces in calls whose final identifier exactly matches an
     /// entry (case sensitive), including qualified/member calls. Declarations
     /// and macro definitions are excluded. Overrides Other; empty calls follow
@@ -5972,6 +5977,7 @@ struct FormatStyle {
       return ExceptDoubleParentheses == R.ExceptDoubleParentheses &&
              InConditionalStatements == R.InConditionalStatements &&
              ExceptForLoops == R.ExceptForLoops &&
+             ExceptSwitchStatements == R.ExceptSwitchStatements &&
              InNamedCalls == R.InNamedCalls &&
              InCStyleCasts == R.InCStyleCasts &&
              InEmptyParentheses == R.InEmptyParentheses && Other == R.Other;

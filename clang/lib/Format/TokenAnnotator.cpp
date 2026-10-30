@@ -4751,6 +4751,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       const auto *Name = LeftParen->Previous;
       if (Style.SpacesInParensOptions.ExceptForLoops && Name->is(tok::kw_for))
         return false;
+      if (Style.SpacesInParensOptions.ExceptSwitchStatements &&
+          Name->is(tok::kw_switch))
+        return false;
       if (!Line.InPPDirective && Name->is(tok::identifier) &&
           LeftParen->isNot(TT_FunctionDeclarationLParen) &&
           Name->isNot(TT_FunctionDeclarationName) &&
