@@ -78,6 +78,7 @@ SpacesInParensOptions:
   InConditionalStatements: true
   ExceptForLoops: true
   ExceptSwitchStatements: true
+  ExceptCatchClauses: true
   InNamedCalls: [ASSERT, VERIFY]
   InCStyleCasts: false
   InEmptyParentheses: false

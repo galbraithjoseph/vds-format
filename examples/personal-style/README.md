@@ -178,3 +178,7 @@ labels, braced cases, default blocks, and nested switches.
 The custom brace settings retain Allman placement elsewhere and set
 `BraceWrapping.AfterEnum: true`; multiline enums put their opening brace
 on its own line.
+
+`SpacesInParensOptions.ExceptCatchClauses: true` removes inner spaces from
+all catch clauses, including `catch (...)` and typed exception handlers, while
+if/while conditions keep their configured spaces.

@@ -366,6 +366,26 @@ TEST_F(FormatTest, SelectiveInnerParenthesisSpacing) {
   verifyFormat("for (x = f( y ); x; ++x)\n  g( x );", Style);
 }
 
+TEST_F(FormatTest, CatchInnerParenthesisSpacing) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  verifyFormat("try {\n} catch ( ... ) {\n}", Style);
+  Style.SpacesInParensOptions.ExceptCatchClauses = true;
+  for (StringRef Declaration : {"...", "const std::exception &error", "Error &",
+                                "int error"}) {
+    const std::string Expected =
+        "try {\n} catch (" + Declaration.str() + ") {\n}";
+    EXPECT_EQ(Expected, format("try {} catch ( " + Declaration.str() + " ) {}", Style));
+    EXPECT_EQ(Expected, format(Expected, Style));
+  }
+  verifyFormat("if ( ready )\n  f();", Style);
+  Style.SpacesInParensOptions.Other = true;
+  verifyFormat("try {\n} catch (...) {\n}", Style);
+  Style.SpacesInParensOptions.ExceptCatchClauses = false;
+  verifyFormat("try {\n} catch ( ... ) {\n}", Style);
+}
+
 TEST_F(FormatTest, SwitchInnerParenthesisSpacing) {
   FormatStyle Style = getLLVMStyle();
   Style.SpacesInParens = FormatStyle::SIPO_Custom;

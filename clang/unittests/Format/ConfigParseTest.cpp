@@ -364,6 +364,7 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, Other);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptForLoops);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptSwitchStatements);
+  CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptCatchClauses);
   const std::vector<std::string> NamedCalls = {"ASSERT", "VERIFY"};
   CHECK_PARSE("SpacesInParensOptions: {InNamedCalls: [ASSERT, VERIFY]}",
               SpacesInParensOptions.InNamedCalls, NamedCalls);

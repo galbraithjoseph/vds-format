@@ -4805,6 +4805,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       LeftParen = Right.MatchingParen;
     if (LeftParen && LeftParen->Previous) {
       const auto *Name = LeftParen->Previous;
+      if (Style.SpacesInParensOptions.ExceptCatchClauses &&
+          Name->is(tok::kw_catch))
+        return false;
       if (Style.SpacesInParensOptions.ExceptForLoops && Name->is(tok::kw_for))
         return false;
       if (Style.SpacesInParensOptions.ExceptSwitchStatements &&

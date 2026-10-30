@@ -122,3 +122,6 @@ auto fnFree = [](void* pv)
 {
 
 };
+
+// Catch clauses omit spaces inside their parentheses.
+void catchSpacing() { try { run(); } catch ( const std::exception& error ) { report(error); } catch ( ... ) { reportUnknown(); } }
