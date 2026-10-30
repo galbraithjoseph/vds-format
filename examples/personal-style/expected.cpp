@@ -275,3 +275,12 @@ shortChunkEnum()
 {
 	enum { CHUNK_SIZE = 64 };
 }
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// C-style casts have a space before the expression.
+void
+castSpacing(void* foo)
+{
+	consume((char**) foo);
+	consume((int) 42);
+}

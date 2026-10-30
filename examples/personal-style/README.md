@@ -53,8 +53,9 @@ when they fit within the column limit. Template declarations use
 `template<class X>` spacing and always break before the following declaration.
 Up to two consecutive blank lines are
 preserved. Trailing `//` comments preserve the existing tabs and spaces between code and
-comment via `AlignTrailingComments: { Kind: Leave }`. Other unspecified settings
-inherit LLVM defaults.
+comment via `AlignTrailingComments: { Kind: Leave }`. C-style casts have a space before the expression via
+`SpaceAfterCStyleCast: true`, for example `(char**) foo`. Other unspecified
+settings inherit LLVM defaults.
 `input.cpp` and `expected.cpp` are formatting fixtures with external
 function declarations, not complete programs.
 
