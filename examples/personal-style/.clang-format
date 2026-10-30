@@ -5,6 +5,9 @@ UseTab: Always
 TabWidth: 4
 IndentWidth: 4
 ContinuationIndentWidth: 4
+BreakConstructorInitializers: AfterColon
+PackConstructorInitializers: Never
+ConstructorInitializerIndentWidth: 4
 PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
@@ -13,7 +16,7 @@ MaxEmptyLinesToKeep: 2
 ColumnLimit: 80
 BreakBeforeBraces: Allman
 AllowShortBlocksOnASingleLine: Empty
-AllowShortFunctionsOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: None
 AllowShortLambdasOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false

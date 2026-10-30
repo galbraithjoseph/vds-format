@@ -30,7 +30,9 @@ a diff or diagnostic and return status 1. Line endings are normalized for compar
 To apply the sample elsewhere, copy `.clang-format` into the project's root or
 pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
 pointers and references, and indented namespace contents. Empty blocks and
-functions and empty lambdas may stay on one line; template declarations always
+empty lambdas may stay on one line; function bodies are expanded. Constructor
+initializer lists keep the colon on the signature line and put each initializer
+on its own line, indented four columns. Template declarations always
 break before the following declaration. Up to two consecutive blank lines are
 preserved. Other unspecified settings inherit LLVM defaults.
 `input.cpp` and `expected.cpp` are formatting fixtures with external
