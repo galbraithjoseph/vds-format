@@ -26,6 +26,8 @@ PackParameters:
 AllowAllParametersOfDeclarationOnNextLine: false
 AlignAfterOpenBracket: true
 BreakBeforeBraces: Allman
+IndentCaseLabels: false
+IndentCaseBlocks: true
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: None
 AllowShortLambdasOnASingleLine: All

@@ -141,3 +141,9 @@ applies to for headers in other supported languages.
 spaces inside if/while conditions. It overrides `InConditionalStatements` and
 `Other`, defaults to false, and leaves the space before `(` unchanged. The
 `switchSpacing` fixture demonstrates this alongside `ASSERT` and `VERIFY`.
+
+Switch labels (`case` and `default`) align with the `switch` statement and its
+braces via `IndentCaseLabels: false`. Braced case bodies indent their opening
+and closing braces one level below the label via `IndentCaseBlocks: true`, with
+statements another level inside. The `switchBlocks` fixture covers grouped
+labels, braced cases, default blocks, and nested switches.

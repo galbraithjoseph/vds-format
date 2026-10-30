@@ -52,3 +52,5 @@ void wrappedDefinition(int firstParameterWithALongName,int secondParameterWithAL
 void functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemTogetherEvenThoughTheyWouldFitThereTogether(int a,int b,int c);
 
 void switchSpacing(int value) { switch ( value ) { case 0: ASSERT(value); break; default: VERIFY(value); break; } }
+
+void switchBlocks(int value) { switch(value) { case 0: case 1: { ASSERT(value); break; } case 2: { switch(value) { case 3: { VERIFY(value); break; } default: break; } break; } default: { VERIFY(value); } break; } }
