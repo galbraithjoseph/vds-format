@@ -34,7 +34,9 @@ on one line; function bodies are expanded. Short lambdas may stay on one line
 within the 120-column limit. Multiline lambda braces align with the enclosing
 statement. Function calls keep arguments together when they fit; wrapped calls
 use one argument per line, aligned with the first argument beside the function
-name when it fits there. Constructor
+name when it fits there. Function declarations and definitions likewise keep
+parameters together when they fit and use one parameter per line when wrapped.
+Constructor
 initializer lists keep the colon on the signature line and put each initializer
 on its own line, indented four columns. Function definitions put return types
 on their own line; declarations keep the return type and function name together

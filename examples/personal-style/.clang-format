@@ -19,6 +19,9 @@ ColumnLimit: 120
 PackArguments:
   BinPack: OnePerLine
 AllowAllArgumentsOnNextLine: false
+PackParameters:
+  BinPack: OnePerLine
+AllowAllParametersOfDeclarationOnNextLine: false
 AlignAfterOpenBracket: true
 BreakBeforeBraces: Allman
 AllowShortBlocksOnASingleLine: Empty
