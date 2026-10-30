@@ -4682,6 +4682,33 @@ the configuration (without a prefix: `Auto`).
 
   For example: BOOST_FOREACH.
 
+(functiondeclarationseparatorcolumn)=
+
+**FunctionDeclarationSeparatorColumn** (`Unsigned`) {versionbadge}`clang-format 24` {ref}`¶ <FunctionDeclarationSeparatorColumn>`
+
+: End column (one-based) of a standalone `//` plus tildes separator before
+  C/C++ function declarations and definitions. Zero (the default) disables
+  insertion. For example, 80 emits 78 tildes at zero indentation, or 74 at
+  four columns of indentation. Tabs count as display columns using `TabWidth`.
+  The slashes count toward the width; there is no space before the first tilde
+  and no trailing whitespace.
+
+  The separator precedes contiguous documentation and ordinary comments and
+  aligns with the first line of the full declaration, including templates and
+  attributes. Existing standalone lines containing only `//` immediately
+  followed by tildes are resized. Other comments are preserved. If fewer than
+  three columns remain, no separator is inserted or resized.
+
+  Preprocessor directives and disabled regions are not crossed. Partial-range
+  formatting changes a separator only when its position, attached comments,
+  and complete declaration header are inside one requested range. Declarations
+  sharing a physical line with preceding code are left unchanged. Recognition
+  uses clang-format's declaration annotations, without full semantic analysis.
+
+  ```yaml
+  FunctionDeclarationSeparatorColumn: 80
+  ```
+
 (ifmacros)=
 
 **IfMacros** (`List of Strings`) {versionbadge}`clang-format 13` {ref}`¶ <IfMacros>`

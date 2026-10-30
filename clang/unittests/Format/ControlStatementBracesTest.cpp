@@ -50,6 +50,27 @@ TEST_F(ControlStatementBracesTest, SimpleAndMixedChains) {
         "if(a){f();g();}else if(b)h();else if(c){i();}else j();");
 }
 
+TEST_F(ControlStatementBracesTest, PreprocessorBranchesDoNotRepeatInsertion) {
+  const std::string Conditional =
+      "#if X\nint x;\n#elif Y\nint y;\n#else\nint z;\n#endif\n";
+  const std::string Input = "if(a)f();while(b)g();";
+  const std::string Expected = "if (a)\n  f();\nwhile (b)\n  g();\n";
+  for (bool Before : {false, true}) {
+    const std::string Source = Before ? Input + "\n" + Conditional
+                                      : Conditional + Input + "\n";
+    const std::string Result = Before ? Expected + Conditional
+                                      : Conditional + Expected;
+    check(Result, Source);
+    auto Style = getDefaultStyle();
+    Style.FunctionDeclarationSeparatorColumn = 80;
+    check(Result, Source, Style);
+    Style.ControlStatementBraces.Mode = Policy::Always;
+    const std::string Braced =
+        "if (a)\n{\n  f();\n}\nwhile (b)\n{\n  g();\n}\n";
+    check(Before ? Braced + Conditional : Conditional + Braced, Source, Style);
+  }
+}
+
 TEST_F(ControlStatementBracesTest, IndependentBranches) {
   auto Style = getDefaultStyle();
   Style.ControlStatementBraces.IfChain = Policy::Independent;

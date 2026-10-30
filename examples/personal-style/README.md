@@ -93,13 +93,27 @@ do not prevent removal when both braces are inside the range. Format Document ap
 the policy to the complete file; a range containing both brace edits can also
 remove them safely.
 
-## Remaining differences
+## Function separators — [issue #4](https://github.com/galbraithjoseph/vds-format/issues/4)
 
-### Function separators — [issue #4](https://github.com/galbraithjoseph/vds-format/issues/4)
+`FunctionDeclarationSeparatorColumn: 80` adds a standalone separator before
+function declarations and definitions, above attached documentation. Its first
+slash aligns with the first line of the declaration (including template and
+attribute prefixes), and its final tilde ends at display column 80. The slashes
+count toward that width: zero indentation uses 78 tildes; four columns of
+indentation use 74. Tabs use `TabWidth` display columns. The fixture checker
+checks exact output and second-pass idempotence for both `input.cpp` and the
+conditional-branch regression fixture `preprocessor-input.cpp`.
 
-Function declarations and definitions do not yet receive a generated `//`
-followed by tildes ending at column 80. `ColumnLimit` controls wrapping and does
-not synthesize comments.
+The option defaults to zero (disabled). Existing standalone `//` plus tildes
+lines are normalized; existing duplicate separators and ordinary comments are
+preserved. Conditional preprocessor branches do not cause repeated insertion
+for declarations following the conditional. If indentation leaves
+less than three columns, insertion and resizing are skipped. Preprocessor
+and formatting-disable boundaries are preserved. Partial formatting changes a
+separator only when its position, attached comments, and the complete declaration
+header are in one requested range. Inline declarations sharing a line with
+preceding code are skipped. Like other declaration-aware clang-format options,
+recognition uses token annotations rather than semantic analysis.
 
 The previous stock-only baseline from #1 was verified with clang-format 17.0.6
 and 23.1.3. Its `RemoveBracesLLVM` approximation left single-statement branches

@@ -1382,6 +1382,10 @@ documentation](CIR/index.md) for more information regarding ClangIR's status and
 
 ### clang-format
 
+- Added `FunctionDeclarationSeparatorColumn`, disabled by default, to insert
+  and normalize tilde comment separators before C/C++ function declarations
+  and definitions at a configurable display column.
+
 - Add `ControlStatementBraces` with `Mode`, `IfChain`, and `WrappedCondition`
   settings to insert braces or remove safe single-statement braces, keep if
   chains consistent, and require braces for formatted multiline conditions.

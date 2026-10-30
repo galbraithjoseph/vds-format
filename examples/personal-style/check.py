@@ -31,27 +31,35 @@ def main():
                    "--assume-filename=sample.cpp"]
         # Parsing must succeed without unknown-option warnings.
         invoke([*options, "--dump-config"])
-        source = (directory / "input.cpp").read_text(encoding="utf-8")
-        expected = (directory / "expected.cpp").read_text(encoding="utf-8")
-        actual = invoke(options, source)
-        second_pass = invoke(options, actual)
         passed = True
-        for label, before, after in [
-            ("Expected output", expected, actual),
-            ("Second-pass idempotence", actual, second_pass),
-        ]:
-            if before != after:
+        for prefix in ("", "preprocessor-"):
+            source = (directory / (prefix + "input.cpp")).read_text(encoding="utf-8")
+            expected = (directory / (prefix + "expected.cpp")).read_text(encoding="utf-8")
+            actual = invoke(options, source)
+            second_pass = invoke(options, actual)
+            for label, before, after in [
+                (prefix + "Expected output", expected, actual),
+                (prefix + "Second-pass idempotence", actual, second_pass),
+            ]:
+                if before != after:
+                    passed = False
+                    print(label + ": FAIL", file=sys.stderr)
+                    sys.stderr.writelines(difflib.unified_diff(
+                        before.splitlines(keepends=True),
+                        after.splitlines(keepends=True),
+                        fromfile=label + " (expected)", tofile=label + " (actual)",
+                    ))
+            separators = [line for line in actual.splitlines()
+                          if line.lstrip().startswith("//~")
+                          and set(line.lstrip()[2:]) == {"~"}]
+            if not separators or any(len(line.expandtabs(4)) != 80
+                                     for line in separators):
                 passed = False
-                print(label + ": FAIL", file=sys.stderr)
-                sys.stderr.writelines(difflib.unified_diff(
-                    before.splitlines(keepends=True),
-                    after.splitlines(keepends=True),
-                    fromfile=label + " (expected)", tofile=label + " (actual)",
-                ))
+                print("Separator display column: FAIL", file=sys.stderr)
         if not passed:
             return 1
         print("PASS: configuration parses, expected output matches, "
-              "and second pass is unchanged")
+              "separators end at column 80, and second pass is unchanged")
         return 0
     except (OSError, subprocess.CalledProcessError) as error:
         print(str(error), file=sys.stderr)
