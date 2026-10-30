@@ -113,3 +113,6 @@ template<class T> concept MediumLengthConceptWithAdditionalDescription = std::sa
 // Requires expressions after logical operators return to declaration indentation.
 template<class T, class C> concept CompatibleLsaString = LsaString<T> && StringCharacter<C> && requires(T& value) { { value.Buffer } -> std::same_as<C*&>; };
 template<class S> concept StringLike = requires(const S& source) { source.data(); source.size(); };
+
+// Prefer wrapping logical operands instead of breaking after assignment.
+void logicalAssignment() { bSuccess = firstReadinessConditionForThisOperationIsSatisfied() && secondReadinessConditionForThisOperationIsSatisfied(); bSuccess = firstReadinessConditionForThisOperationIsSatisfied() || secondReadinessConditionForThisOperationIsSatisfied(); }

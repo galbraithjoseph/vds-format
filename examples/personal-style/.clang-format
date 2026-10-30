@@ -20,6 +20,7 @@ BreakAfterConcept: true
 BreakBeforeRequiresExpression: true
 BreakBeforeBinaryOperators: None
 AlignOperands: Align
+PenaltyBreakAssignment: 1000
 BreakBinaryOperations:
   Default: Never
   PerOperator:

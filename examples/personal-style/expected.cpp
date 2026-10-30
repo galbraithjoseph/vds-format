@@ -337,3 +337,14 @@ template<class S> concept StringLike = requires(const S& source)
 	source.data();
 	source.size();
 };
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Prefer wrapping logical operands instead of breaking after assignment.
+void
+logicalAssignment()
+{
+	bSuccess = firstReadinessConditionForThisOperationIsSatisfied() &&
+			   secondReadinessConditionForThisOperationIsSatisfied();
+	bSuccess = firstReadinessConditionForThisOperationIsSatisfied() ||
+			   secondReadinessConditionForThisOperationIsSatisfied();
+}

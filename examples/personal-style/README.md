@@ -60,6 +60,9 @@ concept declaration is too long, it first wraps after `concept`, before the
 name, without an extra continuation indent. Only constraints that still do not fit split their logical operands onto
 separate lines, aligned with the first operand. Operators end the preceding
 line. Other wrapped `&&` and `||` expressions also use one operand per line.
+`PenaltyBreakAssignment: 1000` prefers breaks between logical operands over a
+break after `=`, keeping the assignment and its first operand together when
+they fit.
 This uses `BreakBeforeConceptDeclarations: Never`, `BreakAfterConcept: true`,
 `BreakBeforeRequiresExpression: true`, `AlignOperands: Align`, and
 `BreakBinaryOperations.PerOperator` rules for the two logical operators.
