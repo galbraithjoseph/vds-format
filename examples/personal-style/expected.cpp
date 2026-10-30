@@ -260,3 +260,18 @@ namespace Example
 auto capturedLambda = [value] (int argument) { return value + argument; };
 auto emptyLambda = [] () {};
 auto genericLambda = []<class T> (T value) { return value; };
+
+// Multiline enum braces use Allman placement.
+enum
+{
+	RUNDOWN_RECV_EOF = (1 << 0),
+	RUNDOWN_SENT_EOF = (1 << 1),
+	RUNDOWN_CLOSED = (1 << 2),
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void
+shortChunkEnum()
+{
+	enum { CHUNK_SIZE = 64 };
+}

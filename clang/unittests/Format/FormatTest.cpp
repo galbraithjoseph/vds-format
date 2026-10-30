@@ -3207,13 +3207,13 @@ TEST_F(FormatTest, ShortEnums) {
                Style);
 
   Style.AllowShortEnumsOnASingleLine = true;
-  verifyFormat("export enum\n"
-               "{\n"
-               "  A,\n"
-               "  B,\n"
-               "  C\n"
-               "} ShortEnum1, ShortEnum2;",
-               Style);
+  verifyFormat("export enum { A, B, C } ShortEnum1, ShortEnum2;", Style);
+  verifyFormat("enum { CHUNK_SIZE = 64 };", Style);
+  verifyFormat("enum { CHUNK_SIZE = 64 };",
+               "enum\n{\n  CHUNK_SIZE = 64\n};", Style);
+  verifyFormat("enum\n{\n  A,\n  B,\n};", Style);
+  Style.ColumnLimit = 25;
+  verifyFormat("enum\n{\n  LONG_ENUM_VALUE = 12345\n};", Style);
 }
 
 TEST_F(FormatTest, ShortCompoundRequirement) {

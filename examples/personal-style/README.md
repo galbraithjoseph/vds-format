@@ -76,7 +76,7 @@ BreakBeforeBraces: Custom
 - `polling` retains its two-statement while body; `counting` removes the optional
   braces around its single statement.
 
-Brace placement follows Allman except for enum declarations. Conditions are checked after formatting a
+Brace placement follows Allman, including multiline enum declarations. Conditions are checked after formatting a
 canonical braced representation, including if initializers. Input line breaks
 alone do not trigger braces, and a single body statement spanning several lines
 is still one statement. With attached braces, a brace that forces condition
@@ -159,5 +159,5 @@ labels, braced cases, default blocks, and nested switches.
 `AllowShortEnumsOnASingleLine: true` keeps short enums such as
 `enum { TIMEOUT_INTERVAL = 4 };` on one line when they fit the column limit.
 The custom brace settings retain Allman placement elsewhere and set
-`BraceWrapping.AfterEnum: false`; longer enums also keep their opening brace
-on the declaration line.
+`BraceWrapping.AfterEnum: true`; multiline enums put their opening brace
+on its own line.

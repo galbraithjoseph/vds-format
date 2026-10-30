@@ -4543,7 +4543,8 @@ reformat(const FormatStyle &Style, StringRef Code,
   default:
     break;
   }
-  if (Expanded.BraceWrapping.AfterEnum)
+  if (Expanded.BraceWrapping.AfterEnum &&
+      (!Expanded.isCpp() || Expanded.BreakBeforeBraces != FormatStyle::BS_Custom))
     Expanded.AllowShortEnumsOnASingleLine = false;
 
   if (Expanded.DisableFormat)
