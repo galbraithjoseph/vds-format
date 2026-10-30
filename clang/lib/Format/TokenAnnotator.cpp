@@ -5908,8 +5908,22 @@ static bool isAllmanLambdaBrace(const FormatToken &Tok) {
          Tok.isNoneOf(TT_ObjCBlockLBrace, TT_DictLiteral);
 }
 
+static bool hasIncompleteLambdaControlStatement(const FormatToken &Brace) {
+  if (!Brace.is(TT_LambdaLBrace) || Brace.Children.size() != 1)
+    return false;
+  const auto *Child = Brace.Children.front();
+  return Child->First->isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
+                               tok::kw_switch) &&
+         Child->endsWith(tok::r_paren);
+}
+
 bool TokenAnnotator::mustBreakBefore(AnnotatedLine &Line,
                                      const FormatToken &Right) const {
+  if (Style.BraceWrapping.BeforeLambdaBody &&
+      (hasIncompleteLambdaControlStatement(Right) ||
+       (Right.is(tok::r_brace) && Right.MatchingParen &&
+        hasIncompleteLambdaControlStatement(*Right.MatchingParen))))
+    return true;
   if (Style.isCpp() && Style.BreakBeforeRequiresExpression &&
       Style.BraceWrapping.AfterRequiresExpression &&
       (Right.is(TT_RequiresExpressionLBrace) ||

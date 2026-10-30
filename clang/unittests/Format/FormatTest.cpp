@@ -300,6 +300,24 @@ TEST_F(FormatTest, SpaceBeforeLambdaParameters) {
   verifyFormat("auto f = [x](int y) { return x + y; };", Style);
 }
 
+TEST_F(FormatTest, IncompleteControlStatementInLambda) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;
+  Style.SpaceBeforeParensOptions.AfterLambdaCaptureList = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.BeforeLambdaBody = true;
+  Style.AllowShortLambdasOnASingleLine = FormatStyle::SLS_All;
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  for (StringRef Header : {"if ()", "if ( ready )", "while ()", "switch ()"}) {
+    const std::string Expected =
+        "auto fn = [] (int value)\n{\n  " + Header.str() + "\n};";
+    EXPECT_EQ(Expected, format(Expected, Style));
+    EXPECT_EQ(Expected, format(Expected, Style, SC_ExpectComplete,
+                               {tooling::Range(Expected.find(')', Expected.find('{')), 1)}));
+  }
+}
+
 TEST_F(FormatTest, LambdaSpacingWithPreservedBlankBody) {
   FormatStyle Style = getLLVMStyle();
   Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;
