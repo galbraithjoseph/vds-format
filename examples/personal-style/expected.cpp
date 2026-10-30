@@ -9,71 +9,71 @@ bool secondLongReadinessConditionIsSatisfied();
 // Simple if/else: optional braces can be removed.
 void simple(bool ready)
 {
-  if ( ready )
-    run();
-  else
-    wait();
+	if ( ready )
+		run();
+	else
+		wait();
 }
 
 // A multi-statement branch requires braces throughout the chain.
 void mixedBranches(bool ready)
 {
-  if ( ready )
-  {
-    prepare();
-    run();
-  }
-  else
-  {
-    wait();
-  }
+	if ( ready )
+	{
+		prepare();
+		run();
+	}
+	else
+	{
+		wait();
+	}
 }
 
 // A wrapped condition requires braces around both single-statement bodies.
 void wrappedCondition()
 {
-  if ( firstLongReadinessConditionIsSatisfied() &&
-       secondLongReadinessConditionIsSatisfied() )
-  {
-    run();
-  }
-  else
-  {
-    wait();
-  }
+	if ( firstLongReadinessConditionIsSatisfied() &&
+		 secondLongReadinessConditionIsSatisfied() )
+	{
+		run();
+	}
+	else
+	{
+		wait();
+	}
 }
 
 // The chain decision includes all else-if branches, including mixed input.
 void chained(bool ready, bool retry)
 {
-  if ( ready )
-  {
-    run();
-  }
-  else if ( retry )
-  {
-    prepare();
-    run();
-  }
-  else
-  {
-    wait();
-  }
+	if ( ready )
+	{
+		run();
+	}
+	else if ( retry )
+	{
+		prepare();
+		run();
+	}
+	else
+	{
+		wait();
+	}
 }
 
 // Spacing after ! and inside while parentheses.
 void polling(bool bStopped)
 {
-  while ( ! bStopped )
-  {
-    run();
-    bStopped = true;
-  }
+	while ( ! bStopped )
+	{
+		run();
+		bStopped = true;
+	}
 }
 
 // Stock conditional-parenthesis spacing also affects for headers.
 void counting(int count)
 {
-  for ( int index = 0; index < count; ++index )
-    step(index);
+	for ( int index = 0; index < count; ++index )
+		step(index);
 }
