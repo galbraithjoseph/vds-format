@@ -4,6 +4,8 @@ Language: Cpp
 UseTab: Always
 TabWidth: 4
 IndentWidth: 4
+AccessModifierOffset: -4
+IndentAccessModifiers: false
 ContinuationIndentWidth: 4
 BreakConstructorInitializers: AfterColon
 PackConstructorInitializers: Never
@@ -12,10 +14,13 @@ Cpp11BracedListStyle: Block
 PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
+FixNamespaceComments: false
 BreakTemplateDeclarations: Yes
 BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
 MaxEmptyLinesToKeep: 2
+AlignTrailingComments:
+  Kind: Leave
 ColumnLimit: 120
 FunctionDeclarationSeparatorColumn: 80
 PackArguments:

@@ -52,14 +52,14 @@ def main():
             separators = [line for line in actual.splitlines()
                           if line.lstrip().startswith("//~")
                           and set(line.lstrip()[2:]) == {"~"}]
-            if not separators or any(len(line.expandtabs(4)) != 80
+            if not separators or any(len(line.expandtabs(4)) != 79
                                      for line in separators):
                 passed = False
                 print("Separator display column: FAIL", file=sys.stderr)
         if not passed:
             return 1
         print("PASS: configuration parses, expected output matches, "
-              "separators end at column 80, and second pass is unchanged")
+              "separators end at column 79, and second pass is unchanged")
         return 0
     except (OSError, subprocess.CalledProcessError) as error:
         print(str(error), file=sys.stderr)

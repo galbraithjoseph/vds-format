@@ -1043,6 +1043,32 @@ void WhitespaceManager::alignTrailingComments() {
       continue;
 
     if (Style.AlignTrailingComments.Kind == FormatStyle::TCAS_Leave) {
+      if (C.NewlinesBefore == 0 && !C.IsInsideToken &&
+          C.Tok->is(TT_LineComment)) {
+        const StringRef Gap(
+            SourceMgr.getCharacterData(C.OriginalWhitespaceRange.getBegin()),
+            SourceMgr.getFileOffset(C.OriginalWhitespaceRange.getEnd()) -
+                SourceMgr.getFileOffset(C.OriginalWhitespaceRange.getBegin()));
+        if (Gap.find_first_not_of(" \t") == StringRef::npos) {
+          unsigned Width = 0;
+          for (char Ch : Gap) {
+            if (Ch == '\t') {
+              if (Style.TabWidth)
+                Width += Style.TabWidth -
+                         (C.PreviousEndOfTokenColumn + Width) % Style.TabWidth;
+            } else {
+              ++Width;
+            }
+          }
+          if (Style.ColumnLimit == 0 ||
+              C.PreviousEndOfTokenColumn + Width + C.TokenLength <
+                  Style.ColumnLimit) {
+            setChangeSpaces(I, Width);
+            C.PreserveCommentWhitespace = true;
+            continue;
+          }
+        }
+      }
       const int OriginalSpaces =
           C.OriginalWhitespaceRange.getEnd().getRawEncoding() -
           C.OriginalWhitespaceRange.getBegin().getRawEncoding() -
@@ -1634,10 +1660,17 @@ void WhitespaceManager::generateChanges() {
       // FIXME: This assert should hold if we computed the column correctly.
       // assert((int)C.StartOfTokenColumn >= C.Spaces);
       unsigned IndentLevel = indentLevelFor(C);
-      appendIndentText(ReplacementText, IndentLevel, std::max(0, C.Spaces),
-                       std::max((int)C.StartOfTokenColumn, C.Spaces) -
-                           std::max(0, C.Spaces),
-                       C.AlignedTo);
+      if (C.PreserveCommentWhitespace) {
+        ReplacementText.append(
+            SourceMgr.getCharacterData(C.OriginalWhitespaceRange.getBegin()),
+            SourceMgr.getFileOffset(C.OriginalWhitespaceRange.getEnd()) -
+                SourceMgr.getFileOffset(C.OriginalWhitespaceRange.getBegin()));
+      } else {
+        appendIndentText(ReplacementText, IndentLevel, std::max(0, C.Spaces),
+                         std::max((int)C.StartOfTokenColumn, C.Spaces) -
+                             std::max(0, C.Spaces),
+                         C.AlignedTo);
+      }
       C.Tok->AppliedIndentLevel =
           C.AlignedTo ? IndentLevel : std::max(0, C.Spaces) / Style.IndentWidth;
       ReplacementText.append(C.CurrentLinePrefix);

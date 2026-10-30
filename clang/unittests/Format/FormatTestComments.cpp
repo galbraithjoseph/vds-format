@@ -3234,6 +3234,22 @@ TEST_F(FormatTestComments, AlignTrailingCommentsLeave) {
                  Style);
 }
 
+TEST_F(FormatTestComments, LeaveTrailingCommentTabsAndSpaces) {
+  FormatStyle Style = getLLVMStyle();
+  Style.AlignTrailingComments.Kind = FormatStyle::TCAS_Leave;
+  Style.TabWidth = 4;
+  const StringRef Code = "int a;\t// first\n"
+                         "int longer;\t\t// second\n"
+                         "int b; \t  // mixed\n"
+                         "int c;\t // tab then space\n"
+                         "int d;// adjacent";
+  for (auto UseTab : {FormatStyle::UT_Never, FormatStyle::UT_Always}) {
+    Style.UseTab = UseTab;
+    EXPECT_EQ(Code, format(Code, Style));
+    EXPECT_EQ("int a;\t// first", format("int   a;\t// first", Style));
+  }
+}
+
 TEST_F(FormatTestComments, DontAlignNamespaceComments) {
   FormatStyle Style = getLLVMStyle();
   Style.NamespaceIndentation = FormatStyle::NI_All;

@@ -5173,15 +5173,16 @@ struct FormatStyle {
   /// \version 14
   SeparateDefinitionStyle SeparateDefinitionBlocks;
 
-  /// End column (one-based) of a standalone ``//`` plus tildes separator
-  /// before C/C++ function declarations and definitions. Zero disables this
-  /// option. For example, 80 emits 78 tildes at zero indentation, or 74 at
+  /// Exclusive end column (one-based) of a standalone ``//`` plus tildes separator
+  /// before C/C++ function definitions. Declarations without bodies are skipped.
+  /// Zero disables this
+  /// option. For example, 80 leaves column 80 empty and emits 77 tildes at zero indentation, or 73 at
   /// four columns of indentation. Tabs count as display columns.
   ///
   /// The separator precedes contiguous documentation and ordinary comments,
   /// and aligns with the first line of the declaration, including templates
   /// and attributes. Existing lines containing only ``//`` immediately followed
-  /// by tildes are resized. Other comments are preserved. If fewer than three
+  /// by tildes are resized. Other comments are preserved. If fewer than four
   /// columns remain, no separator is inserted or resized.
   ///
   /// Preprocessor directives and disabled regions are not crossed. A separator
