@@ -1,4 +1,4 @@
-// Function declarations receive separators ending at display column 80.
+// Function declarations do not receive separators.
 void prepare();void run();void wait();void step(int index);
 bool firstLongReadinessConditionIsSatisfied();bool secondLongReadinessConditionIsSatisfied();
 
@@ -56,3 +56,13 @@ void switchSpacing(int value) { switch ( value ) { case 0: ASSERT(value); break;
 void switchBlocks(int value) { switch(value) { case 0: case 1: { ASSERT(value); break; } case 2: { switch(value) { case 3: { VERIFY(value); break; } default: break; } break; } default: { VERIFY(value); } break; } }
 
 void shortEnum() { enum { TIMEOUT_INTERVAL = 4 }; }
+
+// Access specifiers align with the class braces; members indent one level.
+class AccessExample {
+public:
+void run();
+protected:
+int value;
+private:
+void reset();
+};

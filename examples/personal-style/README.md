@@ -29,7 +29,9 @@ a diff or diagnostic and return status 1. Line endings are normalized for compar
 
 To apply the sample elsewhere, copy `.clang-format` into the project's root or
 pass `--style=file:<path>`. It uses tabs with a width of four, left-aligned
-pointers and references, and indented namespace contents.
+pointers and references, and indented namespace contents. Class access specifiers (`public:`,
+`protected:`, and `private:`) align with the class braces; members indent one
+level.
 Nonempty braced initializers use interior spaces, as in `int x{ 0 };`
 and `int values[]{ 1, 2, 3 };`, via `Cpp11BracedListStyle: Block`. Empty
 initializers remain `{}`. Wrapped initializer lists use block indentation and
@@ -96,7 +98,8 @@ remove them safely.
 ## Function separators — [issue #4](https://github.com/galbraithjoseph/vds-format/issues/4)
 
 `FunctionDeclarationSeparatorColumn: 80` adds a standalone separator before
-function declarations and definitions, above attached documentation. Its first
+function definitions, above attached documentation. Declarations without bodies,
+including class member declarations, do not receive separators. Its first
 slash aligns with the first line of the declaration (including template and
 attribute prefixes), and its final tilde ends at display column 80. The slashes
 count toward that width: zero indentation uses 78 tildes; four columns of

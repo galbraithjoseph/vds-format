@@ -2791,7 +2791,7 @@ private:
         Function |=
             Tok->isOneOf(TT_FunctionDeclarationName, TT_CtorDtorDeclName);
       }
-      if (!Function)
+      if (!Function || Line->endsWith(tok::semi))
         continue;
       const unsigned Column = Line->First->OriginalColumn;
       if (Column >= Style.FunctionDeclarationSeparatorColumn ||

@@ -21,39 +21,49 @@ TEST_F(FormatTest, FunctionDeclarationSeparators) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;
   const std::string Sep = "//" + std::string(78, '~') + "\n";
-  const std::string MemberSep = "  //" + std::string(76, '~') + "\n";
   auto Check = [&](StringRef Input, const std::string &Expected) {
     EXPECT_EQ(Expected, format(Input, Style));
     EXPECT_EQ(Expected, format(Expected, Style));
   };
-  Check("void f();", Sep + "void f();");
+  Check("void f();", "void f();");
   Check("void f() {}", Sep + "void f() {}");
-  Check("//~~~~\nvoid f();", Sep + "void f();");
-  Check("/// Documentation.\nvoid f();", Sep + "/// Documentation.\nvoid f();");
-  Check("// Ordinary comment.\n/* Documentation. */\nvoid f();",
-        Sep + "// Ordinary comment.\n/* Documentation. */\nvoid f();");
-  Check("template <class T>\n[[nodiscard]] T f(T value);",
-        Sep + "template <class T> [[nodiscard]] T f(T value);");
-  Check(
-      "class C { C(); ~C(); void f(); int operator()(int); operator bool(); };",
-      "class C {\n" + MemberSep + "  C();\n" + MemberSep + "  ~C();\n" +
-          MemberSep + "  void f();\n" + MemberSep + "  int operator()(int);\n" +
-          MemberSep + "  operator bool();\n};");
+  Check("//~~~~\nvoid f() {}", Sep + "void f() {}");
+  Check("/// Documentation.\nvoid f() {}", Sep + "/// Documentation.\nvoid f() {}");
+  Check("// Ordinary comment.\n/* Documentation. */\nvoid f() {}",
+        Sep + "// Ordinary comment.\n/* Documentation. */\nvoid f() {}");
+  Check("template <class T>\n[[nodiscard]] T f(T value) {}",
+        Sep + "template <class T> [[nodiscard]] T f(T value) {}");
+  Check("class C { C(); ~C(); void f(); int operator()(int); operator bool(); };",
+        "class C {\n  C();\n  ~C();\n  void f();\n  int operator()(int);\n"
+        "  operator bool();\n};");
   Check("int x;\nvoid (*callback)(int);\nauto lambda = [] { return 1; };",
         "int x;\nvoid (*callback)(int);\nauto lambda = [] { return 1; };");
   Check("void f() { g(); if (x) h(); }",
         Sep + "void f() {\n  g();\n  if (x)\n    h();\n}");
-  Check("#define F() void f();\n#if X\nvoid f();\n#endif",
-        "#define F() void f();\n#if X\n" + Sep + "void f();\n#endif");
-  Check("// clang-format off\nvoid f();\n// clang-format on\nvoid g();",
-        "// clang-format off\nvoid f();\n// clang-format on\n" + Sep +
-            "void g();");
+  Check("#define F() void f();\n#if X\nvoid f() {}\n#endif",
+        "#define F() void f();\n#if X\n" + Sep + "void f() {}\n#endif");
+  Check("// clang-format off\nvoid f() {}\n// clang-format on\nvoid g() {}",
+        "// clang-format off\nvoid f() {}\n// clang-format on\n" + Sep +
+            "void g() {}");
   Style.FunctionDeclarationSeparatorColumn = 10;
-  Check("void f();", "//~~~~~~~~\nvoid f();");
+  Check("void f() {}", "//~~~~~~~~\nvoid f() {}");
   Style.FunctionDeclarationSeparatorColumn = 2;
-  Check("void f();", "void f();");
+  Check("void f() {}", "void f() {}");
   Style.FunctionDeclarationSeparatorColumn = 0;
-  Check("void f();", "void f();");
+  Check("void f() {}", "void f() {}");
+}
+
+TEST_F(FormatTest, FunctionSeparatorsSkipDeclarationsOnPaste) {
+  FormatStyle Style = getLLVMStyle();
+  Style.FunctionDeclarationSeparatorColumn = 80;
+  const std::string Code =
+      "class C {\npublic:\n  C();\n  ~C();\n  virtual void f() = 0;\n"
+      "  void g() const; // Declaration.\n  C(const C &) = delete;\n"
+      "  C &operator=(const C &) = default;\n};\nvoid freeFunction();";
+  EXPECT_EQ(Code, format(Code, Style));
+  const auto Begin = Code.find("  void g");
+  EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                         {tooling::Range(Begin, Code.find('\n', Begin) - Begin)}));
 }
 
 TEST_F(FormatTest, FunctionDeclarationSeparatorsAcrossPreprocessorBranches) {
@@ -62,23 +72,23 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorsAcrossPreprocessorBranches) {
   const std::string Sep = "//" + std::string(78, '~') + "\n";
   const std::string Conditional =
       "#if X\nint x;\n#elif Y\nint y;\n#else\nint z;\n#endif\n";
-  const std::string Expected = Conditional + Sep + "/// Docs.\nvoid f();";
-  EXPECT_EQ(Expected, format(Conditional + "/// Docs.\nvoid f();", Style));
+  const std::string Expected = Conditional + Sep + "/// Docs.\nvoid f() {}";
+  EXPECT_EQ(Expected, format(Conditional + "/// Docs.\nvoid f() {}", Style));
   EXPECT_EQ(Expected, format(Expected, Style));
   const std::string Duplicates =
-      Conditional + Sep + Sep + "/// Docs.\nvoid f();";
+      Conditional + Sep + Sep + "/// Docs.\nvoid f() {}";
   EXPECT_EQ(Duplicates, format(Duplicates, Style));
   const std::string BranchFunctions =
-      "#if X\n" + Sep + "void a();\n#else\n" + Sep +
-      "void b();\n#endif\n" + Sep + "void f();";
+      "#if X\n" + Sep + "void a() {}\n#else\n" + Sep +
+      "void b() {}\n#endif\n" + Sep + "void f() {}";
   EXPECT_EQ(BranchFunctions,
-            format("#if X\nvoid a();\n#else\nvoid b();\n#endif\nvoid f();", Style));
+            format("#if X\nvoid a() {}\n#else\nvoid b() {}\n#endif\nvoid f() {}", Style));
   EXPECT_EQ(BranchFunctions, format(BranchFunctions, Style));
   const std::string Nested =
       "#if X\n#if Y\nint x;\n#else\nint y;\n#endif\n#else\nint z;\n#endif\n";
-  EXPECT_EQ(Nested + Sep + "void f();", format(Nested + "void f();", Style));
-  EXPECT_EQ(Nested + Sep + "void f();",
-            format(Nested + Sep + "void f();", Style));
+  EXPECT_EQ(Nested + Sep + "void f() {}", format(Nested + "void f() {}", Style));
+  EXPECT_EQ(Nested + Sep + "void f() {}",
+            format(Nested + Sep + "void f() {}", Style));
 }
 
 TEST_F(FormatTest, FunctionDeclarationSeparatorColumnsAndRanges) {
@@ -89,10 +99,10 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorColumnsAndRanges) {
   Style.UseTab = FormatStyle::UT_Always;
   Style.NamespaceIndentation = FormatStyle::NI_All;
   const std::string Expected = "namespace N {\n\t//" + std::string(74, '~') +
-                               "\n\tvoid f();\n} // namespace N";
-  EXPECT_EQ(Expected, format("namespace N { void f(); }", Style));
+                               "\n\tvoid f() {}\n} // namespace N";
+  EXPECT_EQ(Expected, format("namespace N { void f() {} }", Style));
   EXPECT_EQ(Expected, format(Expected, Style));
-  const std::string Input = "/// Doc.\nvoid f(int x, int y);\nvoid g();";
+  const std::string Input = "/// Doc.\nvoid f(int x, int y) {}\nvoid g() {}";
   EXPECT_EQ(Input, format(Input, Style, SC_ExpectComplete,
                           {tooling::Range(Input.find("int x"), 5)}));
   const std::string Selected = "//" + std::string(78, '~') + "\n" + Input;
@@ -100,12 +110,12 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorColumnsAndRanges) {
                              {tooling::Range(0, Input.find("void g"))}));
   Style.ColumnLimit = 20;
   const std::string Wrapped =
-      "//" + std::string(78, '~') + "\nvoid f(int first,\n\t   int second);";
-  EXPECT_EQ(Wrapped, format("void f(int first, int second);", Style));
+      "//" + std::string(78, '~') + "\nvoid f(int first,\n\t   int second) {\n}";
+  EXPECT_EQ(Wrapped, format("void f(int first, int second) {}", Style));
   EXPECT_EQ(Wrapped, format(Wrapped, Style));
   Style.FunctionDeclarationSeparatorColumn = 6;
-  EXPECT_EQ("namespace N {\n\tvoid f();\n}",
-            format("namespace N { void f(); }", Style));
+  EXPECT_EQ("namespace N {\n\tvoid f() {}\n} // namespace N",
+            format("namespace N { void f() {} }", Style));
 }
 
 TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
@@ -120,14 +130,15 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
       Definition,
       format("template<class T> [[nodiscard]] T f(T x) {return x;}", Style));
   EXPECT_EQ(Definition, format(Definition, Style));
+  Style.BreakAfterReturnType = FormatStyle::RTBS_None;
   const std::string Docs =
-      Sep + "/** A description.\n * More details.\n */\nvoid f();";
-  EXPECT_EQ(Docs, format("/** A description.\n * More details.\n */\nvoid f();",
+      Sep + "/** A description.\n * More details.\n */\nvoid f() {}";
+  EXPECT_EQ(Docs, format("/** A description.\n * More details.\n */\nvoid f() {}",
                          Style));
   EXPECT_EQ(Docs, format(Docs, Style));
   Style.LineEnding = FormatStyle::LE_CRLF;
-  const std::string Windows = "//" + std::string(78, '~') + "\r\nvoid f();\r\n";
-  EXPECT_EQ(Windows, format("void f();\n", Style));
+  const std::string Windows = "//" + std::string(78, '~') + "\r\nvoid f() {}\r\n";
+  EXPECT_EQ(Windows, format("void f() {}\n", Style));
   EXPECT_EQ(Windows, format(Windows, Style));
   Style.LineEnding = FormatStyle::LE_LF;
   Style.IndentWidth = 4;
@@ -135,8 +146,8 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   Style.FixNamespaceComments = false;
   const std::string Nested = "namespace N {\n    class C {\n        //" +
                              std::string(70, '~') +
-                             "\n        void f();\n    };\n}";
-  EXPECT_EQ(Nested, format("namespace N { class C { void f(); }; }", Style));
+                             "\n        void f() {}\n    };\n}";
+  EXPECT_EQ(Nested, format("namespace N { class C { void f() {} }; }", Style));
   EXPECT_EQ(Nested, format(Nested, Style));
 }
 

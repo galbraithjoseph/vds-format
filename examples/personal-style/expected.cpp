@@ -1,15 +1,9 @@
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Function declarations receive separators ending at display column 80.
+// Function declarations do not receive separators.
 void prepare();
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void run();
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void wait();
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void step(int index);
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool firstLongReadinessConditionIsSatisfied();
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool secondLongReadinessConditionIsSatisfied();
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,10 +153,8 @@ bracedInitializers()
 	int empty{};
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Parameters stay compact until wrapping is needed, then use one per line.
 void shortParameters(int first, int second, int third);
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void wrappedParameters(int firstParameterWithALongName,
 					   int secondParameterWithALongName,
 					   int thirdParameterWithALongName,
@@ -176,7 +168,6 @@ wrappedDefinition(int firstParameterWithALongName,
 {
 	run();
 }
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void
 functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemTogetherEvenThoughTheyWouldFitThereTogether(
 	int a,
@@ -238,3 +229,16 @@ shortEnum()
 {
 	enum { TIMEOUT_INTERVAL = 4 };
 }
+
+// Access specifiers align with the class braces; members indent one level.
+class AccessExample
+{
+public:
+	void run();
+
+protected:
+	int value;
+
+private:
+	void reset();
+};
