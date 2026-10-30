@@ -1487,6 +1487,11 @@ ContinuationIndenter::getNewLineColumn(const LineState &State) {
   }
 
   const FormatToken &Previous = *Current.Previous;
+  if (Style.BreakAfterConcept && Previous.is(tok::kw_concept))
+    return State.FirstIndent;
+  if (Style.BreakBeforeRequiresExpression &&
+      Current.is(TT_RequiresExpression))
+    return State.FirstIndent;
   // If we are continuing an expression, we want to use the continuation indent.
   const auto ContinuationIndent =
       std::max(IndentationAndAlignment(CurrentState.LastSpace),

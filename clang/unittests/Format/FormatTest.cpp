@@ -155,6 +155,91 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   EXPECT_EQ(Nested, format(Nested, Style));
 }
 
+TEST_F(FormatTest, ConceptDeclarationWrapPriority) {
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 90;
+  Style.SpaceAfterTemplateKeyword = false;
+  Style.BreakBeforeConceptDeclarations = FormatStyle::BBCDS_Never;
+  Style.BreakAfterConcept = true;
+  Style.BreakBeforeRequiresExpression = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterRequiresExpression = true;
+  Style.BreakBinaryOperations.PerOperator = {
+      {{tok::ampamp, tok::pipepipe}, FormatStyle::BBO_OnePerLine, 0}};
+  verifyFormat("template<class T> concept Short = A<T> || B<T>;", Style);
+  const std::string HeaderWrapped =
+      "template<class T> concept\n"
+      "LsaString = std::same_as<T, STRING> || std::same_as<T, UNICODE_STRING>;";
+  verifyFormat(HeaderWrapped,
+               "template<class T> concept LsaString = std::same_as<T, STRING> || "
+               "std::same_as<T, UNICODE_STRING>;", Style);
+  EXPECT_EQ(HeaderWrapped, format(HeaderWrapped, Style));
+  const std::string LogicalWrapped =
+      "template<class T> concept\n"
+      "LsaString = std::same_as<T, STRING> ||\n"
+      "            std::same_as<T, UNICODE_STRING> ||\n"
+      "            std::same_as<T, LSA_STRING> ||\n"
+      "            std::same_as<T, LSA_UNICODE_STRING>;";
+  verifyFormat(LogicalWrapped,
+               "template<class T> concept LsaString = std::same_as<T, STRING> || "
+               "std::same_as<T, UNICODE_STRING> || std::same_as<T, LSA_STRING> || "
+               "std::same_as<T, LSA_UNICODE_STRING>;", Style);
+  EXPECT_EQ(LogicalWrapped, format(LogicalWrapped, Style));
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  Style.FixNamespaceComments = false;
+  verifyFormat("namespace N {\n"
+               "  template<class T> concept\n"
+               "  LsaString = std::same_as<T, STRING> || std::same_as<T, UNICODE_STRING>;\n"
+               "}", Style);
+  verifyFormat("template<class T> concept C = requires(T t)\n"
+               "{\n"
+               "  t.foo();\n"
+               "  t.bar();\n"
+               "};",
+               "template<class T> concept C = requires(T t) { t.foo(); t.bar(); };",
+               Style);
+}
+
+TEST_F(FormatTest, RequiresExpressionsAtDeclarationIndent) {
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 120;
+  Style.SpaceAfterTemplateKeyword = false;
+  Style.BreakBeforeConceptDeclarations = FormatStyle::BBCDS_Never;
+  Style.BreakBeforeRequiresExpression = true;
+  Style.BreakAfterConcept = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterRequiresExpression = true;
+  Style.BreakBinaryOperations.PerOperator = {
+      {{tok::ampamp, tok::pipepipe}, FormatStyle::BBO_OnePerLine, 0}};
+  const std::string Expected =
+      "template<class T, class C> concept CompatibleLsaString = LsaString<T> &&\n"
+      "                                                         StringCharacter<C> &&\n"
+      "requires(T &value)\n"
+      "{\n"
+      "  { value.Buffer } -> std::same_as<C *&>;\n"
+      "};";
+  EXPECT_EQ(Expected, format(
+      "template<class T, class C> concept CompatibleLsaString = LsaString<T> && "
+      "StringCharacter<C> && requires(T& value) { "
+      "{ value.Buffer } -> std::same_as<C*&>; };", Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
+  const std::string Inline =
+      "template<class S> concept StringLike = requires(const S &source)\n"
+      "{\n"
+      "  source.data();\n"
+      "};";
+  EXPECT_EQ(Inline, format(Inline, Style));
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  Style.FixNamespaceComments = false;
+  verifyFormat("namespace N {\n"
+               "  template<class T> concept C = A<T> &&\n"
+               "  requires(T value)\n"
+               "  {\n"
+               "    value.foo();\n"
+               "  };\n"
+               "}", Style);
+}
+
 TEST_F(FormatTest, SpaceBeforeLambdaParameters) {
   FormatStyle Style = getLLVMStyle();
   Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;

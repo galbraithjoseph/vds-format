@@ -50,7 +50,18 @@ initializer lists keep the colon on the signature line and put each initializer
 on its own line, indented four columns. Function definitions put return types
 on their own line; declarations keep the return type and function name together
 when they fit within the column limit. Template declarations use
-`template<class X>` spacing and always break before the following declaration.
+`template<class X>` spacing and break before the following declaration, except
+concept declarations. Short concepts stay on one line. Requires expressions
+after logical operators start at the declaration indentation on a new line.
+A requires expression directly after `=` stays on the same line when its header
+fits. Requires braces stay on separate lines. If the remaining
+concept declaration is too long, it first wraps after `concept`, before the
+name, without an extra continuation indent. Only constraints that still do not fit split their logical operands onto
+separate lines, aligned with the first operand. Operators end the preceding
+line. Other wrapped `&&` and `||` expressions also use one operand per line.
+This uses `BreakBeforeConceptDeclarations: Never`, `BreakAfterConcept: true`,
+`BreakBeforeRequiresExpression: true`, `AlignOperands: Align`, and
+`BreakBinaryOperations.PerOperator` rules for the two logical operators.
 Up to two consecutive blank lines are
 preserved. Trailing `//` comments preserve the existing tabs and spaces between code and
 comment via `AlignTrailingComments: { Kind: Leave }`. C-style casts have a space before the expression via

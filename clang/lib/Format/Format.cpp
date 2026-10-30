@@ -1407,6 +1407,9 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.BreakBeforeCloseBracketLoop);
     IO.mapOptional("BreakBeforeCloseBracketSwitch",
                    Style.BreakBeforeCloseBracketSwitch);
+    IO.mapOptional("BreakAfterConcept", Style.BreakAfterConcept);
+    IO.mapOptional("BreakBeforeRequiresExpression",
+                   Style.BreakBeforeRequiresExpression);
     IO.mapOptional("BreakBeforeConceptDeclarations",
                    Style.BreakBeforeConceptDeclarations);
     IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
@@ -2002,6 +2005,8 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.BreakBeforeCloseBracketLoop = false;
   LLVMStyle.BreakBeforeCloseBracketSwitch = false;
   LLVMStyle.BreakBeforeConceptDeclarations = FormatStyle::BBCDS_Always;
+  LLVMStyle.BreakAfterConcept = false;
+  LLVMStyle.BreakBeforeRequiresExpression = false;
   LLVMStyle.BreakBeforeInlineASMColon = FormatStyle::BBIAS_OnlyMultiline;
   LLVMStyle.BreakBeforeReturnType = FormatStyle::BBRTS_None;
   LLVMStyle.BreakBeforeTemplateCloser = false;

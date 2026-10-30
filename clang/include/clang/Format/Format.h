@@ -2529,6 +2529,20 @@ struct FormatStyle {
   /// \version 12
   BreakBeforeConceptDeclarationsStyle BreakBeforeConceptDeclarations;
 
+  /// Prefer a break after ``concept`` and before its name when a C++ concept
+  /// declaration exceeds the column limit. The name aligns with the declaration
+  /// indentation. Short declarations stay together.
+  /// Logical constraints wrap only if they still do not fit after this break.
+  /// \version 24
+  bool BreakAfterConcept;
+
+  /// Start C++ requires expressions at the declaration indentation. Expressions
+  /// directly following ``=`` may stay on the same line when they fit; other
+  /// requires expressions start on a new line. Brace placement is controlled
+  /// separately by ``BraceWrapping.AfterRequiresExpression``.
+  /// \version 24
+  bool BreakBeforeRequiresExpression;
+
   /// Different ways to break ASM parameters.
   enum BreakBeforeInlineASMColonStyle : int8_t {
     /// No break before inline ASM colon.
@@ -6370,6 +6384,8 @@ struct FormatStyle {
            BreakBeforeCloseBracketLoop == R.BreakBeforeCloseBracketLoop &&
            BreakBeforeCloseBracketSwitch == R.BreakBeforeCloseBracketSwitch &&
            BreakBeforeConceptDeclarations == R.BreakBeforeConceptDeclarations &&
+           BreakAfterConcept == R.BreakAfterConcept &&
+           BreakBeforeRequiresExpression == R.BreakBeforeRequiresExpression &&
            BreakBeforeInlineASMColon == R.BreakBeforeInlineASMColon &&
            BreakBeforeReturnType == R.BreakBeforeReturnType &&
            BreakBeforeTemplateCloser == R.BreakBeforeTemplateCloser &&

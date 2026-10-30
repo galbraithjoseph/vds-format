@@ -15,6 +15,16 @@ PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
 FixNamespaceComments: false
+BreakBeforeConceptDeclarations: Never
+BreakAfterConcept: true
+BreakBeforeRequiresExpression: true
+BreakBeforeBinaryOperators: None
+AlignOperands: Align
+BreakBinaryOperations:
+  Default: Never
+  PerOperator:
+    - Operators: ['&&', '||']
+      Style: OnePerLine
 BreakTemplateDeclarations: Yes
 BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false

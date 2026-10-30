@@ -96,3 +96,20 @@ void shortChunkEnum() { enum { CHUNK_SIZE = 64 }; }
 
 // C-style casts have a space before the expression.
 void castSpacing(void* foo) { consume((char**) foo); consume((int) 42); }
+
+// Wrapped concepts align each requirement with the first.
+template<class T> concept LsaString = std::same_as<T, STRING> || std::same_as<T, UNICODE_STRING> || std::same_as<T, LSA_STRING> || std::same_as<T, LSA_UNICODE_STRING>;
+template<class T> concept Small = std::same_as<T, int> || std::same_as<T, char>;
+
+// Wrapped logical expressions put each operand on its own line.
+void logicalWrapping() { if (firstLongReadinessConditionIsSatisfied() && secondLongReadinessConditionIsSatisfied() && firstLongReadinessConditionIsSatisfied()) run(); }
+
+// Requires blocks expand before the concept header needs to wrap.
+template<class T> concept HasOperations = requires(T value) { value.foo(); value.bar(); };
+
+// Prefer wrapping after concept before splitting logical requirements.
+template<class T> concept MediumLengthConceptWithAdditionalDescription = std::same_as<T, UNICODE_STRING> || std::same_as<T, LSA_UNICODE_STRING>;
+
+// Requires expressions after logical operators return to declaration indentation.
+template<class T, class C> concept CompatibleLsaString = LsaString<T> && StringCharacter<C> && requires(T& value) { { value.Buffer } -> std::same_as<C*&>; };
+template<class S> concept StringLike = requires(const S& source) { source.data(); source.size(); };
