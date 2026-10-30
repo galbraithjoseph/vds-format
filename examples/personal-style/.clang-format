@@ -25,10 +25,27 @@ PackParameters:
   BinPack: OnePerLine
 AllowAllParametersOfDeclarationOnNextLine: false
 AlignAfterOpenBracket: true
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: false
+  AfterExportBlock: true
+  AfterExternBlock: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterRequiresExpression: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
 IndentCaseLabels: false
 IndentCaseBlocks: true
 AllowShortBlocksOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: None
 AllowShortLambdasOnASingleLine: All
 LambdaBodyIndentation: OuterScope

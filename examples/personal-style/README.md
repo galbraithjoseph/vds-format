@@ -58,7 +58,7 @@ ControlStatementBraces:
   Mode: SingleStatement
   IfChain: Consistent
   WrappedCondition: Require
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Custom
 ```
 
 - `simple` removes optional braces from both single-statement branches.
@@ -69,7 +69,7 @@ BreakBeforeBraces: Allman
 - `polling` retains its two-statement while body; `counting` removes the optional
   braces around its single statement.
 
-Brace placement remains Allman. Conditions are checked after formatting a
+Brace placement follows Allman except for enum declarations. Conditions are checked after formatting a
 canonical braced representation, including if initializers. Input line breaks
 alone do not trigger braces, and a single body statement spanning several lines
 is still one statement. With attached braces, a brace that forces condition
@@ -147,3 +147,9 @@ braces via `IndentCaseLabels: false`. Braced case bodies indent their opening
 and closing braces one level below the label via `IndentCaseBlocks: true`, with
 statements another level inside. The `switchBlocks` fixture covers grouped
 labels, braced cases, default blocks, and nested switches.
+
+`AllowShortEnumsOnASingleLine: true` keeps short enums such as
+`enum { TIMEOUT_INTERVAL = 4 };` on one line when they fit the column limit.
+The custom brace settings retain Allman placement elsewhere and set
+`BraceWrapping.AfterEnum: false`; longer enums also keep their opening brace
+on the declaration line.

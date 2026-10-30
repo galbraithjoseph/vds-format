@@ -231,3 +231,10 @@ switchBlocks(int value)
 		break;
 	}
 }
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void
+shortEnum()
+{
+	enum { TIMEOUT_INTERVAL = 4 };
+}
