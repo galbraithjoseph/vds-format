@@ -5188,7 +5188,9 @@ struct FormatStyle {
   SeparateDefinitionStyle SeparateDefinitionBlocks;
 
   /// Exclusive end column (one-based) of a standalone ``//`` plus tildes separator
-  /// before C/C++ function definitions. Declarations without bodies are skipped.
+  /// before C/C++ function definitions and C++ concept declarations. Concepts
+  /// receive a blank line before the separator, except at the start of a file.
+  /// Function declarations without bodies are skipped.
   /// Zero disables this
   /// option. For example, 80 leaves column 80 empty and emits 77 tildes at zero indentation, or 73 at
   /// four columns of indentation. Tabs count as display columns.

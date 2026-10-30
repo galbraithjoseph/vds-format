@@ -2793,11 +2793,13 @@ private:
       if (Line->InPPDirective || Line->InMacroBody || Line->First->Finalized)
         continue;
       bool Function = false;
+      bool Concept = false;
       for (auto *Tok = Line->First; Tok; Tok = Tok->Next) {
         Function |=
             Tok->isOneOf(TT_FunctionDeclarationName, TT_CtorDtorDeclName);
+        Concept |= Tok->is(tok::kw_concept);
       }
-      if (!Function || Line->endsWith(tok::semi))
+      if (!Concept && (!Function || Line->endsWith(tok::semi)))
         continue;
       const unsigned Column = Line->First->OriginalColumn;
       if (Column >= Style.FunctionDeclarationSeparatorColumn ||
@@ -2843,6 +2845,11 @@ private:
           Indent.str() + "//" +
           std::string(Style.FunctionDeclarationSeparatorColumn - Column - 3,
                       '~');
+      if (Concept && Begin > 0) {
+        const unsigned PreviousLineStart = LineStart(Begin - 1);
+        if (!Code.slice(PreviousLineStart, Begin).trim().empty())
+          Separator.insert(0, Newline.str());
+      }
       if (IsSeparator(First)) {
         const unsigned OldEnd = SM.getFileOffset(First->Tok.getEndLoc());
         if (Code.slice(Begin, OldEnd) != Separator) {

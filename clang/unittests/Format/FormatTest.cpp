@@ -70,6 +70,29 @@ TEST_F(FormatTest, FunctionSeparatorsSkipDeclarationsOnPaste) {
                          {tooling::Range(Begin, Code.find('\n', Begin) - Begin)}));
 }
 
+TEST_F(FormatTest, ConceptDeclarationSeparators) {
+  FormatStyle Style = getLLVMStyle();
+  Style.FunctionDeclarationSeparatorColumn = 80;
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
+  const std::string Declaration = "template <class T>\nconcept C = A<T>;";
+  const std::string Expected = "int x;\n\n" + Sep + Declaration;
+  EXPECT_EQ(Expected, format("int x;\n" + Declaration, Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
+  EXPECT_EQ(Sep + Declaration, format(Declaration, Style));
+  EXPECT_EQ(Expected, format("int x;\n//~~~\n" + Declaration, Style));
+  const std::string Docs = "int x;\n\n" + Sep + "/// Docs.\n" + Declaration;
+  EXPECT_EQ(Docs, format("int x;\n/// Docs.\n" + Declaration, Style));
+  EXPECT_EQ(Docs, format(Docs, Style));
+  const std::string Two = Sep + Declaration + "\n\n" + Sep + Declaration;
+  EXPECT_EQ(Two, format(Declaration + "\n" + Declaration, Style));
+  EXPECT_EQ(Two, format(Two, Style));
+  EXPECT_EQ("// clang-format off\n" + Declaration,
+            format("// clang-format off\n" + Declaration, Style));
+  const auto Begin = Declaration.find("A<T>");
+  EXPECT_EQ(Declaration, format(Declaration, Style, SC_ExpectComplete,
+                                 {tooling::Range(Begin, 4)}));
+}
+
 TEST_F(FormatTest, FunctionDeclarationSeparatorsAcrossPreprocessorBranches) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;

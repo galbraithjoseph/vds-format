@@ -116,7 +116,8 @@ remove them safely.
 ## Function separators — [issue #4](https://github.com/galbraithjoseph/vds-format/issues/4)
 
 `FunctionDeclarationSeparatorColumn: 80` adds a standalone separator before
-function definitions, above attached documentation. Declarations without bodies,
+function definitions and concept declarations, above attached documentation.
+Concept separators have a blank line above them, except at the start of a file. Declarations without bodies,
 including class member declarations, do not receive separators. Its first
 slash aligns with the first line of the declaration (including template and
 attribute prefixes), and its final tilde ends at display column 79, leaving column 80 empty. The slashes
