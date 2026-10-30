@@ -1,0 +1,1 @@
+# RUN: %python %S/Inputs/cursor-empty-braces.py clang-format %t.cpp

@@ -366,8 +366,25 @@ static bool emitReplacementWarnings(const Replacements &Replaces,
   return WarningsAsErrors;
 }
 
+// A cursor between an empty brace pair belongs to the opening-brace side.
+// Generic replacement mapping otherwise moves it past the newline inserted
+// before the closing brace, leaving the editor cursor attached to that brace.
+static unsigned shiftedCursorPosition(StringRef Code,
+                                      const Replacements &FormatChanges,
+                                      unsigned Position) {
+  if (Position > 0 && Position < Code.size() && Code[Position - 1] == '{' &&
+      Code[Position] == '}') {
+    for (const auto &Change : FormatChanges) {
+      if (Change.getOffset() == Position && Change.getLength() == 0 &&
+          Change.getReplacementText().contains('\n') &&
+          Change.getReplacementText().trim().empty())
+        return FormatChanges.getShiftedCodePosition(Position - 1) + 1;
+    }
+  }
+  return FormatChanges.getShiftedCodePosition(Position);
+}
+
 static void outputXML(const Replacements &Replaces,
-                      const Replacements &FormatChanges,
                       const FormattingAttemptStatus &Status,
                       const cl::opt<unsigned> &Cursor,
                       unsigned CursorPosition) {
@@ -378,7 +395,7 @@ static void outputXML(const Replacements &Replaces,
     outs() << " line='" << Status.Line << "'";
   outs() << ">\n";
   if (Cursor.getNumOccurrences() != 0) {
-    outs() << "<cursor>" << FormatChanges.getShiftedCodePosition(CursorPosition)
+    outs() << "<cursor>" << CursorPosition
            << "</cursor>\n";
   }
 
@@ -556,12 +573,14 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
       FormatStyle::ControlStatementBracesStyle::Leave)
     Replaces =
         splitBraceRemovalEdits(Code->getBuffer(), Replaces, RequestedRanges);
+  const unsigned OutputCursorPosition =
+      shiftedCursorPosition(*ChangedCode, FormatChanges, CursorPosition);
   if (DryRun) {
     return Replaces.size() > (IsJson ? 1u : 0u) &&
            emitReplacementWarnings(Replaces, AssumedFileName, std::move(Code));
   }
   if (OutputXML) {
-    outputXML(Replaces, FormatChanges, Status, Cursor, CursorPosition);
+    outputXML(Replaces, Status, Cursor, OutputCursorPosition);
   } else {
     auto InMemoryFileSystem =
         makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
@@ -582,7 +601,7 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
     } else {
       if (Cursor.getNumOccurrences() != 0) {
         outs() << "{ \"Cursor\": "
-               << FormatChanges.getShiftedCodePosition(CursorPosition)
+               << OutputCursorPosition
                << ", \"IncompleteFormat\": "
                << (Status.FormatComplete ? "false" : "true");
         if (!Status.FormatComplete)
