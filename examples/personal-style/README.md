@@ -101,9 +101,9 @@ remove them safely.
 function definitions, above attached documentation. Declarations without bodies,
 including class member declarations, do not receive separators. Its first
 slash aligns with the first line of the declaration (including template and
-attribute prefixes), and its final tilde ends at display column 80. The slashes
-count toward that width: zero indentation uses 78 tildes; four columns of
-indentation use 74. Tabs use `TabWidth` display columns. The fixture checker
+attribute prefixes), and its final tilde ends at display column 79, leaving column 80 empty. The slashes
+count toward that width: zero indentation uses 77 tildes; four columns of
+indentation use 73. Tabs use `TabWidth` display columns. The fixture checker
 checks exact output and second-pass idempotence for both `input.cpp` and the
 conditional-branch regression fixture `preprocessor-input.cpp`.
 
@@ -111,7 +111,7 @@ The option defaults to zero (disabled). Existing standalone `//` plus tildes
 lines are normalized; existing duplicate separators and ordinary comments are
 preserved. Conditional preprocessor branches do not cause repeated insertion
 for declarations following the conditional. If indentation leaves
-less than three columns, insertion and resizing are skipped. Preprocessor
+less than four columns, insertion and resizing are skipped. Preprocessor
 and formatting-disable boundaries are preserved. Partial formatting changes a
 separator only when its position, attached comments, and the complete declaration
 header are in one requested range. Inline declarations sharing a line with

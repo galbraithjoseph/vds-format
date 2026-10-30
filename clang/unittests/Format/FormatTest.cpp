@@ -20,7 +20,7 @@ class FormatTest : public test::FormatTestBase {};
 TEST_F(FormatTest, FunctionDeclarationSeparators) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;
-  const std::string Sep = "//" + std::string(78, '~') + "\n";
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
   auto Check = [&](StringRef Input, const std::string &Expected) {
     EXPECT_EQ(Expected, format(Input, Style));
     EXPECT_EQ(Expected, format(Expected, Style));
@@ -46,7 +46,11 @@ TEST_F(FormatTest, FunctionDeclarationSeparators) {
         "// clang-format off\nvoid f() {}\n// clang-format on\n" + Sep +
             "void g() {}");
   Style.FunctionDeclarationSeparatorColumn = 10;
-  Check("void f() {}", "//~~~~~~~~\nvoid f() {}");
+  Check("void f() {}", "//~~~~~~~\nvoid f() {}");
+  Style.FunctionDeclarationSeparatorColumn = 4;
+  Check("void f() {}", "//~\nvoid f() {}");
+  Style.FunctionDeclarationSeparatorColumn = 3;
+  Check("void f() {}", "void f() {}");
   Style.FunctionDeclarationSeparatorColumn = 2;
   Check("void f() {}", "void f() {}");
   Style.FunctionDeclarationSeparatorColumn = 0;
@@ -69,7 +73,7 @@ TEST_F(FormatTest, FunctionSeparatorsSkipDeclarationsOnPaste) {
 TEST_F(FormatTest, FunctionDeclarationSeparatorsAcrossPreprocessorBranches) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;
-  const std::string Sep = "//" + std::string(78, '~') + "\n";
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
   const std::string Conditional =
       "#if X\nint x;\n#elif Y\nint y;\n#else\nint z;\n#endif\n";
   const std::string Expected = Conditional + Sep + "/// Docs.\nvoid f() {}";
@@ -98,19 +102,19 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorColumnsAndRanges) {
   Style.TabWidth = 4;
   Style.UseTab = FormatStyle::UT_Always;
   Style.NamespaceIndentation = FormatStyle::NI_All;
-  const std::string Expected = "namespace N {\n\t//" + std::string(74, '~') +
+  const std::string Expected = "namespace N {\n\t//" + std::string(73, '~') +
                                "\n\tvoid f() {}\n} // namespace N";
   EXPECT_EQ(Expected, format("namespace N { void f() {} }", Style));
   EXPECT_EQ(Expected, format(Expected, Style));
   const std::string Input = "/// Doc.\nvoid f(int x, int y) {}\nvoid g() {}";
   EXPECT_EQ(Input, format(Input, Style, SC_ExpectComplete,
                           {tooling::Range(Input.find("int x"), 5)}));
-  const std::string Selected = "//" + std::string(78, '~') + "\n" + Input;
+  const std::string Selected = "//" + std::string(77, '~') + "\n" + Input;
   EXPECT_EQ(Selected, format(Input, Style, SC_ExpectComplete,
                              {tooling::Range(0, Input.find("void g"))}));
   Style.ColumnLimit = 20;
   const std::string Wrapped =
-      "//" + std::string(78, '~') + "\nvoid f(int first,\n\t   int second) {\n}";
+      "//" + std::string(77, '~') + "\nvoid f(int first,\n\t   int second) {\n}";
   EXPECT_EQ(Wrapped, format("void f(int first, int second) {}", Style));
   EXPECT_EQ(Wrapped, format(Wrapped, Style));
   Style.FunctionDeclarationSeparatorColumn = 6;
@@ -123,7 +127,7 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   Style.FunctionDeclarationSeparatorColumn = 80;
   Style.BreakTemplateDeclarations = FormatStyle::BTDS_Yes;
   Style.BreakAfterReturnType = FormatStyle::RTBS_AllDefinitions;
-  const std::string Sep = "//" + std::string(78, '~') + "\n";
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
   const std::string Definition =
       Sep + "template <class T>\n[[nodiscard]] T\nf(T x) {\n  return x;\n}";
   EXPECT_EQ(
@@ -137,7 +141,7 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
                          Style));
   EXPECT_EQ(Docs, format(Docs, Style));
   Style.LineEnding = FormatStyle::LE_CRLF;
-  const std::string Windows = "//" + std::string(78, '~') + "\r\nvoid f() {}\r\n";
+  const std::string Windows = "//" + std::string(77, '~') + "\r\nvoid f() {}\r\n";
   EXPECT_EQ(Windows, format("void f() {}\n", Style));
   EXPECT_EQ(Windows, format(Windows, Style));
   Style.LineEnding = FormatStyle::LE_LF;
@@ -145,7 +149,7 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   Style.NamespaceIndentation = FormatStyle::NI_All;
   Style.FixNamespaceComments = false;
   const std::string Nested = "namespace N {\n    class C {\n        //" +
-                             std::string(70, '~') +
+                             std::string(69, '~') +
                              "\n        void f() {}\n    };\n}";
   EXPECT_EQ(Nested, format("namespace N { class C { void f() {} }; }", Style));
   EXPECT_EQ(Nested, format(Nested, Style));

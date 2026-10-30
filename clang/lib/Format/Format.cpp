@@ -2795,7 +2795,7 @@ private:
         continue;
       const unsigned Column = Line->First->OriginalColumn;
       if (Column >= Style.FunctionDeclarationSeparatorColumn ||
-          Style.FunctionDeclarationSeparatorColumn - Column < 3) {
+          Style.FunctionDeclarationSeparatorColumn - Column < 4) {
         continue;
       }
       const auto *First = Line->First;
@@ -2835,7 +2835,7 @@ private:
         continue;
       std::string Separator =
           Indent.str() + "//" +
-          std::string(Style.FunctionDeclarationSeparatorColumn - Column - 2,
+          std::string(Style.FunctionDeclarationSeparatorColumn - Column - 3,
                       '~');
       if (IsSeparator(First)) {
         const unsigned OldEnd = SM.getFileOffset(First->Tok.getEndLoc());
