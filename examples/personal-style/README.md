@@ -182,3 +182,6 @@ on its own line.
 `SpacesInParensOptions.ExceptCatchClauses: true` removes inner spaces from
 all catch clauses, including `catch (...)` and typed exception handlers, while
 if/while conditions keep their configured spaces.
+
+`IndentPPDirectives: None` keeps preprocessor directive hashes in column 1,
+including directives inside namespaces and nested conditional blocks.
