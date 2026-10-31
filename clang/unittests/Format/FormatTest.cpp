@@ -435,6 +435,26 @@ TEST_F(FormatTest, SwitchInnerParenthesisSpacing) {
   verifyFormat("switch (x) {\ndefault:\n  break;\n}", Style);
 }
 
+TEST_F(FormatTest, IncompleteMemberBeforeAccessSpecifier) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.AccessModifierOffset = -2;
+  for (StringRef Access : {"public", "protected", "private"}) {
+    const std::string Code =
+        "class Widget\n{\n  Widget\n" + Access.str() + ":\n};";
+    EXPECT_EQ(Code, format(Code, Style));
+    const auto Begin = Code.find("Widget", Code.find('{'));
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Begin, 6)}));
+    const std::string Unindented =
+        "class Widget\n{\nWidget\n" + Access.str() + ":\n};";
+    EXPECT_EQ(Code, format(Unindented, Style, SC_ExpectComplete,
+                            {tooling::Range(Unindented.find("Widget", Unindented.find('{')), 6)}));
+  }
+  verifyFormat("class Widget : public Base\n{\n};", Style);
+  verifyFormat("class Widget\n{\n  Widget();\n\nprotected:\n};", Style);
+}
+
 TEST_F(FormatTest, MessUp) {
   EXPECT_EQ("1 2 3", messUp("1 2 3"));
   EXPECT_EQ("1 2 3", messUp("1\n2\n3"));
