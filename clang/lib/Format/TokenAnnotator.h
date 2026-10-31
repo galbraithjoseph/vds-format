@@ -186,6 +186,9 @@ public:
   bool IsModuleOrImportDecl;
   bool MustBeDeclaration;
   bool MightBeFunctionDecl;
+  // Set after all annotated lines exist, including an Allman body brace on
+  // the following line. An unfinished signature alone is not a definition.
+  bool HasFunctionBody = false;
   bool IsMultiVariableDeclStmt;
 
   /// \c True if this line contains a macro call for which an expansion exists.

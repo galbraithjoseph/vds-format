@@ -4060,7 +4060,7 @@ bool TokenAnnotator::mustBreakForReturnType(const AnnotatedLine &Line) const {
     return true;
   case FormatStyle::RTBS_AllDefinitions:
   case FormatStyle::RTBS_TopLevelDefinitions:
-    return Line.mightBeFunctionDefinition();
+    return Line.mightBeFunctionDefinition() && Line.HasFunctionBody;
   }
 
   return false;
@@ -4078,9 +4078,10 @@ bool TokenAnnotator::mustBreakBeforeReturnType(
   case FormatStyle::BBRTS_TopLevel:
     return Line.Level == 0;
   case FormatStyle::BBRTS_AllDefinitions:
-    return Line.mightBeFunctionDefinition();
+    return Line.mightBeFunctionDefinition() && Line.HasFunctionBody;
   case FormatStyle::BBRTS_TopLevelDefinitions:
-    return Line.Level == 0 && Line.mightBeFunctionDefinition();
+    return Line.Level == 0 && Line.mightBeFunctionDefinition() &&
+           Line.HasFunctionBody;
   }
 
   return false;

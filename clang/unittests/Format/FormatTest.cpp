@@ -17,6 +17,25 @@ namespace {
 
 class FormatTest : public test::FormatTestBase {};
 
+TEST_F(FormatTest, DefinitionReturnTypeBreakWaitsForBody) {
+  auto Style = getLLVMStyle();
+  Style.BreakAfterReturnType = FormatStyle::RTBS_AllDefinitions;
+  for (StringRef Input : {"void Test()", "void Test(int argument)",
+                          "void Test() noexcept", "void Test();"})
+    EXPECT_EQ(Input, format(Input, Style));
+  EXPECT_EQ("void\nTest() {}", format("void Test() {}", Style));
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::ShortFunctionStyle();
+  EXPECT_EQ("void\nTest()\n{\n}", format("void Test()\n{}", Style));
+  EXPECT_EQ("class C\n{\n  void Test()\n};",
+            format("class C { void Test() };", Style));
+  Style.BreakAfterReturnType = FormatStyle::RTBS_TopLevelDefinitions;
+  EXPECT_EQ("void Test()", format("void Test()", Style));
+  EXPECT_EQ("void\nTest()\n{\n}", format("void Test()\n{}", Style));
+  Style.BreakAfterReturnType = FormatStyle::RTBS_All;
+  EXPECT_EQ("void\nTest()", format("void Test()", Style));
+}
+
 TEST_F(FormatTest, EmptySwitchBraceCompletion) {
   auto Style = getLLVMStyle();
   Style.BreakBeforeBraces = FormatStyle::BS_Allman;
@@ -11244,9 +11263,7 @@ TEST_F(FormatTest, ReturnTypeBreakingStyle) {
                "Bar g(int a, Bar) final;\n"
                "Bar h(a, Bar) final;",
                Style);
-  verifyFormat("int\n"
-               "f(a)",
-               Style);
+  verifyFormat("int f(a)", Style);
   verifyFormat("bool\n"
                "f(size_t = 0, bool b = false)\n"
                "{\n"
