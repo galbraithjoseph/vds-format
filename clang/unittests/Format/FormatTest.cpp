@@ -17,6 +17,20 @@ namespace {
 
 class FormatTest : public test::FormatTestBase {};
 
+TEST_F(FormatTest, FunctionSeparatorsPrecedeUppercaseReturnTypes) {
+  auto Style = getLLVMStyle();
+  Style.BreakAfterReturnType = FormatStyle::RTBS_AllDefinitions;
+  Style.FunctionDeclarationSeparatorColumn = 30;
+  const std::string Expected =
+      "class C {\n\n  //" + std::string(25, '~') +
+      "\n  HRESULT\n  open() noexcept {}\n\n  //" + std::string(25, '~') +
+      "\n  HANDLE\n  native_handle() const noexcept {}\n};";
+  EXPECT_EQ(Expected,
+            format("class C { HRESULT open() noexcept {} "
+                   "HANDLE native_handle() const noexcept {} };", Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
+}
+
 TEST_F(FormatTest, FunctionDeclarationSeparators) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;
@@ -41,9 +55,9 @@ TEST_F(FormatTest, FunctionDeclarationSeparators) {
   Check("void f() { g(); if (x) h(); }",
         Sep + "void f() {\n  g();\n  if (x)\n    h();\n}");
   Check("#define F() void f();\n#if X\nvoid f() {}\n#endif",
-        "#define F() void f();\n#if X\n" + Sep + "void f() {}\n#endif");
+        "#define F() void f();\n#if X\n\n" + Sep + "void f() {}\n#endif");
   Check("// clang-format off\nvoid f() {}\n// clang-format on\nvoid g() {}",
-        "// clang-format off\nvoid f() {}\n// clang-format on\n" + Sep +
+        "// clang-format off\nvoid f() {}\n// clang-format on\n\n" + Sep +
             "void g() {}");
   Style.FunctionDeclarationSeparatorColumn = 10;
   Check("void f() {}", "//~~~~~~~\nvoid f() {}");
@@ -122,22 +136,22 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorsAcrossPreprocessorBranches) {
   const std::string Sep = "//" + std::string(77, '~') + "\n";
   const std::string Conditional =
       "#if X\nint x;\n#elif Y\nint y;\n#else\nint z;\n#endif\n";
-  const std::string Expected = Conditional + Sep + "/// Docs.\nvoid f() {}";
+  const std::string Expected = Conditional + "\n" + Sep + "/// Docs.\nvoid f() {}";
   EXPECT_EQ(Expected, format(Conditional + "/// Docs.\nvoid f() {}", Style));
   EXPECT_EQ(Expected, format(Expected, Style));
   const std::string Duplicates =
-      Conditional + Sep + Sep + "/// Docs.\nvoid f() {}";
+      Conditional + "\n" + Sep + Sep + "/// Docs.\nvoid f() {}";
   EXPECT_EQ(Duplicates, format(Duplicates, Style));
   const std::string BranchFunctions =
-      "#if X\n" + Sep + "void a() {}\n#else\n" + Sep +
-      "void b() {}\n#endif\n" + Sep + "void f() {}";
+      "#if X\n\n" + Sep + "void a() {}\n#else\n\n" + Sep +
+      "void b() {}\n#endif\n\n" + Sep + "void f() {}";
   EXPECT_EQ(BranchFunctions,
             format("#if X\nvoid a() {}\n#else\nvoid b() {}\n#endif\nvoid f() {}", Style));
   EXPECT_EQ(BranchFunctions, format(BranchFunctions, Style));
   const std::string Nested =
       "#if X\n#if Y\nint x;\n#else\nint y;\n#endif\n#else\nint z;\n#endif\n";
-  EXPECT_EQ(Nested + Sep + "void f() {}", format(Nested + "void f() {}", Style));
-  EXPECT_EQ(Nested + Sep + "void f() {}",
+  EXPECT_EQ(Nested + "\n" + Sep + "void f() {}", format(Nested + "void f() {}", Style));
+  EXPECT_EQ(Nested + "\n" + Sep + "void f() {}",
             format(Nested + Sep + "void f() {}", Style));
 }
 
@@ -148,7 +162,7 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorColumnsAndRanges) {
   Style.TabWidth = 4;
   Style.UseTab = FormatStyle::UT_Always;
   Style.NamespaceIndentation = FormatStyle::NI_All;
-  const std::string Expected = "namespace N {\n\t//" + std::string(73, '~') +
+  const std::string Expected = "namespace N {\n\n\t//" + std::string(73, '~') +
                                "\n\tvoid f() {}\n} // namespace N";
   EXPECT_EQ(Expected, format("namespace N { void f() {} }", Style));
   EXPECT_EQ(Expected, format(Expected, Style));
@@ -194,7 +208,7 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   Style.IndentWidth = 4;
   Style.NamespaceIndentation = FormatStyle::NI_All;
   Style.FixNamespaceComments = false;
-  const std::string Nested = "namespace N {\n    class C {\n        //" +
+  const std::string Nested = "namespace N {\n    class C {\n\n        //" +
                              std::string(69, '~') +
                              "\n        void f() {}\n    };\n}";
   EXPECT_EQ(Nested, format("namespace N { class C { void f() {} }; }", Style));

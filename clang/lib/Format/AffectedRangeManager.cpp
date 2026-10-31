@@ -53,6 +53,28 @@ bool AffectedRangeManager::computeAffectedLines(
     if (nonPPLineAffected(Line, PreviousLine, Lines))
       SomeLineAffected = true;
 
+    // Completing an empty function body also completes its signature. With
+    // wrapped braces the signature is a separate unwrapped line, outside the
+    // editor's range for the newly inserted brace pair.
+    bool FunctionHeader = false;
+    if (PreviousLine)
+      for (auto *Tok = PreviousLine->First; Tok; Tok = Tok->Next)
+        FunctionHeader |=
+            Tok->isOneOf(TT_FunctionDeclarationName, TT_CtorDtorDeclName);
+    const bool EmptyBody =
+        (Line->First->Next && Line->First->Next->is(tok::r_brace)) ||
+        (I + 1 != E && (*(I + 1))->First->is(tok::r_brace));
+    const bool ClosingBraceAffected =
+        EmptyBody && I + 1 != E && (*(I + 1))->First->is(tok::r_brace) &&
+        affectsTokenRange(*(*(I + 1))->First, *(*(I + 1))->First, true);
+    if ((Line->Affected || ClosingBraceAffected) &&
+        Line->First->is(tok::l_brace) && FunctionHeader &&
+        !PreviousLine->endsWith(tok::semi) && EmptyBody) {
+      Line->Affected = true;
+      (*(I - 1))->Affected = true;
+      SomeLineAffected = true;
+    }
+
     PreviousLine = Line;
     ++I;
   }
