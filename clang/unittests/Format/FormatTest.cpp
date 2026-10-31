@@ -17,6 +17,24 @@ namespace {
 
 class FormatTest : public test::FormatTestBase {};
 
+TEST_F(FormatTest, EmptySwitchBraceCompletion) {
+  auto Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.AllowShortBlocksOnASingleLine = FormatStyle::SBS_Always;
+  Style.SpaceBeforeParens = FormatStyle::SBPO_ControlStatements;
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  const std::string Input = "void f()\n{\n  switch(hr)\n  {}\n}";
+  const std::string Expected =
+      "void f()\n{\n  switch ( hr )\n  {\n  }\n}";
+  EXPECT_EQ(Expected, format(Input, Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
+  EXPECT_EQ(Expected, format(Input, Style, SC_ExpectComplete,
+                            {tooling::Range(Input.find("{}"), 2)}));
+  Style.BreakBeforeBraces = FormatStyle::BS_Attach;
+  EXPECT_EQ("switch ( hr ) {\n}", format("switch(hr) {}", Style));
+}
+
 TEST_F(FormatTest, FunctionSeparatorsPrecedeUppercaseReturnTypes) {
   auto Style = getLLVMStyle();
   Style.BreakAfterReturnType = FormatStyle::RTBS_AllDefinitions;

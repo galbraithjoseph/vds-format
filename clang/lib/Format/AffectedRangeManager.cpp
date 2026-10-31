@@ -68,7 +68,9 @@ bool AffectedRangeManager::computeAffectedLines(
         EmptyBody && I + 1 != E && (*(I + 1))->First->is(tok::r_brace) &&
         affectsTokenRange(*(*(I + 1))->First, *(*(I + 1))->First, true);
     if ((Line->Affected || ClosingBraceAffected) &&
-        Line->First->is(tok::l_brace) && FunctionHeader &&
+        Line->First->is(tok::l_brace) &&
+        (FunctionHeader ||
+         (PreviousLine && PreviousLine->First->is(tok::kw_switch))) &&
         !PreviousLine->endsWith(tok::semi) && EmptyBody) {
       Line->Affected = true;
       (*(I - 1))->Affected = true;
