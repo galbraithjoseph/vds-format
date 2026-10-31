@@ -80,7 +80,7 @@ SpacesInParensOptions:
   ExceptForLoops: true
   ExceptSwitchStatements: false
   ExceptCatchClauses: true
-  InNamedCalls: [ASSERT, VERIFY, CPPUNIT_ASSERT, CPPUNIT_ASSERT_EQUAL, TestAssert]
+  InNamedCalls: [ASSERT, VERIFY, CPPUNIT_ASSERT, CPPUNIT_ASSERT_EQUAL, Q_ASSERT, TestAssert]
   InCStyleCasts: false
   InEmptyParentheses: false
   Other: false
