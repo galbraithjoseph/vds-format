@@ -121,6 +121,32 @@ TokenAnalyzer::process(bool SkipAnnotation) {
         Annotator.annotate(*AnnotatedLines.back());
     }
 
+    auto MarkFunctionBodies =
+        [&](auto &&Self, SmallVectorImpl<AnnotatedLine *> &Lines) -> void {
+      for (unsigned I = 0; I < Lines.size(); ++I) {
+        auto *Line = Lines[I];
+        for (auto *Tok = Line->First; Tok; Tok = Tok->Next) {
+          Line->HasFunctionBody |= Tok->is(TT_FunctionLBrace);
+          Self(Self, Tok->Children);
+        }
+        unsigned Next = I + 1;
+        while (Next < Lines.size() && Lines[Next]->First->is(tok::comment))
+          ++Next;
+        // K&R parameter declarations can occupy separate unwrapped lines
+        // between the signature and its body.
+        if (!Line->endsWith(tok::semi)) {
+          while (Next < Lines.size() && Lines[Next]->Level == Line->Level &&
+                 !Lines[Next]->InPPDirective &&
+                 !Lines[Next]->MightBeFunctionDecl &&
+                 Lines[Next]->endsWith(tok::semi))
+            ++Next;
+        }
+        if (Next < Lines.size())
+          Line->HasFunctionBody |= Lines[Next]->First->is(tok::l_brace);
+      }
+    };
+    MarkFunctionBodies(MarkFunctionBodies, AnnotatedLines);
+
     std::pair<tooling::Replacements, unsigned> RunResult =
         analyze(Annotator, AnnotatedLines, Lex);
 

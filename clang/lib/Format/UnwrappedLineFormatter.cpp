@@ -395,6 +395,9 @@ private:
     const auto *FirstNonComment = TheLine->getFirstNonComment();
     if (!FirstNonComment)
       return 0;
+    // Switch bodies are never short blocks, even when temporarily empty.
+    if (Style.isCpp() && FirstNonComment->is(tok::kw_switch))
+      return 0;
 
     // FIXME: There are probably cases where we should use FirstNonComment
     // instead of TheLine->First.
@@ -485,6 +488,10 @@ private:
     }
     if (PreviousLine && TheLine->First->is(tok::l_brace)) {
       switch (PreviousLine->First->Tok.getKind()) {
+      case tok::kw_switch:
+        if (Style.isCpp())
+          return 0;
+        break;
       case tok::at:
         // Don't merge block with left brace wrapped after ObjC special blocks.
         if (PreviousLine->First->Next &&
