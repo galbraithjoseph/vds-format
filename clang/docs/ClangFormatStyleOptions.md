@@ -4694,6 +4694,7 @@ the configuration (without a prefix: `Auto`).
   and no trailing whitespace.
 
   The separator precedes contiguous documentation and ordinary comments and
+  has a blank line above it, except at the start of a file. It
   aligns with the first line of the full declaration, including templates and
   attributes. Existing standalone lines containing only `//` immediately
   followed by tildes are resized. Other comments are preserved. If fewer than

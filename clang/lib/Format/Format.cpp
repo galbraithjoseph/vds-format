@@ -2814,6 +2814,17 @@ private:
         continue;
       }
       const auto *First = Line->First;
+      // A standalone uppercase return type may be lexed as a freestanding
+      // macro after layout breaks the return type onto its own line.
+      unsigned PrefixIndex = I;
+      if (Function && PrefixIndex > 0) {
+        const auto *Prefix = Lines[PrefixIndex - 1];
+        if (!Prefix->InPPDirective && !Prefix->First->Finalized &&
+            Prefix->First == Prefix->Last &&
+            Prefix->First->is(TT_FunctionLikeOrFreestandingMacro) &&
+            Prefix->Level == Line->Level)
+          First = Prefix->First;
+      }
       // A comment block may share one annotated line, including a format-on
       // marker. Walk individual comment tokens without crossing that marker.
       for (const auto *Comment : llvm::reverse(Comments)) {
@@ -2865,7 +2876,7 @@ private:
           Indent.str() + "//" +
           std::string(Style.FunctionDeclarationSeparatorColumn - Column - 3,
                       '~');
-      if (Concept && Begin > 0) {
+      if (Begin > 0) {
         const unsigned PreviousLineStart = LineStart(Begin - 1);
         if (!Code.slice(PreviousLineStart, Begin).trim().empty())
           Separator.insert(0, Newline.str());
