@@ -70,6 +70,29 @@ TEST_F(FormatTest, FunctionSeparatorsSkipDeclarationsOnPaste) {
                          {tooling::Range(Begin, Code.find('\n', Begin) - Begin)}));
 }
 
+TEST_F(FormatTest, FunctionSeparatorsRequireDefinitionBody) {
+  FormatStyle Style = getLLVMStyle();
+  Style.FunctionDeclarationSeparatorColumn = 80;
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.AccessModifierOffset = -2;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::ShortFunctionStyle();
+  for (StringRef Header : {"Foo(const Foo)", "void f()", "~Foo()"}) {
+    const std::string Code =
+        "class Foo\n{\n  " + Header.str() + "\nprotected:\n};";
+    EXPECT_EQ(Code, format(Code, Style));
+    const auto Begin = Code.find(Header);
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Begin, Header.size())}));
+  }
+  EXPECT_EQ("void f()", format("void f()", Style));
+  EXPECT_EQ("Foo::Foo(const Foo &other)",
+            format("Foo::Foo(const Foo &other)", Style));
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
+  EXPECT_EQ(Sep + "void f()\n{\n}", format("void f() {}", Style));
+  EXPECT_EQ(Sep + "Foo::Foo(const Foo &other)\n{\n}",
+            format("Foo::Foo(const Foo &other) {}", Style));
+}
+
 TEST_F(FormatTest, ConceptDeclarationSeparators) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;

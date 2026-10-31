@@ -2794,13 +2794,19 @@ private:
       if (Line->InPPDirective || Line->InMacroBody || Line->First->Finalized)
         continue;
       bool Function = false;
+      bool FunctionBody = false;
       bool Concept = false;
       for (auto *Tok = Line->First; Tok; Tok = Tok->Next) {
         Function |=
             Tok->isOneOf(TT_FunctionDeclarationName, TT_CtorDtorDeclName);
+        FunctionBody |= Tok->is(TT_FunctionLBrace);
         Concept |= Tok->is(tok::kw_concept);
       }
-      if (!Concept && (!Function || Line->endsWith(tok::semi)))
+      // An unfinished declaration need not end in a semicolon. Require a
+      // function-body brace, either attached or on the following Allman line.
+      FunctionBody |= I + 1 < Lines.size() &&
+                      Lines[I + 1]->First->is(TT_FunctionLBrace);
+      if (!Concept && (!Function || !FunctionBody))
         continue;
       const unsigned Column = Line->First->OriginalColumn;
       if (Column >= Style.FunctionDeclarationSeparatorColumn ||
