@@ -2840,10 +2840,23 @@ private:
       if (!Indent.trim().empty())
         continue;
       const unsigned End = SM.getFileOffset(Line->Last->Tok.getEndLoc());
+      const auto *BodyLine = Line;
+      if (!Line->Last->is(TT_FunctionLBrace) && I + 1 < Lines.size())
+        BodyLine = Lines[I + 1];
+      const auto *BodyBrace = BodyLine->Last;
+      const unsigned BodyIndex = I + (BodyLine == Line ? 0 : 1);
+      const bool CompletedEmptyBody =
+          BodyBrace->is(TT_FunctionLBrace) && BodyIndex + 1 < Lines.size() &&
+          Lines[BodyIndex + 1]->First->is(tok::r_brace) &&
+          llvm::any_of(Env.getCharRanges(), [&](CharSourceRange Range) {
+            return Offset(BodyBrace) <= SM.getFileOffset(Range.getEnd()) &&
+                   Offset(Lines[BodyIndex + 1]->First) >=
+                       SM.getFileOffset(Range.getBegin());
+          });
       if (llvm::none_of(Env.getCharRanges(), [&](CharSourceRange Range) {
             return Begin >= SM.getFileOffset(Range.getBegin()) &&
                    End <= SM.getFileOffset(Range.getEnd());
-          })) {
+          }) && !CompletedEmptyBody) {
         continue;
       }
       if (!ProcessedPositions.insert(Begin).second)
@@ -3239,6 +3252,7 @@ public:
     AffectedRangeMgr.computeAffectedLines(AnnotatedLines);
     for (AnnotatedLine *Line : AnnotatedLines)
       Annotator.calculateFormattingInformation(*Line);
+    AffectedRangeMgr.computeAffectedLines(AnnotatedLines);
     Annotator.setCommentLineLevels(AnnotatedLines);
 
     WhitespaceManager Whitespaces(

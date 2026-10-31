@@ -4702,6 +4702,8 @@ the configuration (without a prefix: `Auto`).
   Preprocessor directives and disabled regions are not crossed. Partial-range
   formatting changes a separator only when its position, attached comments,
   and complete declaration header are inside one requested range. Declarations
+  whose empty function body's opening brace is in the range also receive a
+  separator, supporting editor brace completion. Declarations
   sharing a physical line with preceding code are left unchanged. Recognition
   uses clang-format's declaration annotations, without full semantic analysis.
 

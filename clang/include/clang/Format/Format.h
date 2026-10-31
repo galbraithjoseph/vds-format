@@ -5204,7 +5204,9 @@ struct FormatStyle {
   /// Preprocessor directives and disabled regions are not crossed. A separator
   /// is changed only when its position, attached comments and complete
   /// declaration header are inside a requested formatting range. Declarations
-  /// sharing a physical line with preceding code are left unchanged.
+  /// whose empty function body's opening brace is in the range are also
+  /// formatted, supporting editor brace completion.
+  /// Declarations sharing a physical line with preceding code are left unchanged.
   /// \version 24
   unsigned FunctionDeclarationSeparatorColumn;
 
