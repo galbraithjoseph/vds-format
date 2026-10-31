@@ -38,7 +38,8 @@ mixedBranches(bool ready)
 void
 wrappedCondition()
 {
-	if ( firstLongReadinessConditionIsSatisfied() && secondLongReadinessConditionIsSatisfied() &&
+	if ( firstLongReadinessConditionIsSatisfied() &&
+		 secondLongReadinessConditionIsSatisfied() &&
 		 firstLongReadinessConditionIsSatisfied() )
 	{
 		run();
@@ -178,7 +179,7 @@ functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemToget
 void
 switchSpacing(int value)
 {
-	switch (value)
+	switch ( value )
 	{
 	case 0:
 		ASSERT( value );
@@ -193,7 +194,7 @@ switchSpacing(int value)
 void
 switchBlocks(int value)
 {
-	switch (value)
+	switch ( value )
 	{
 	case 0:
 	case 1:
@@ -203,7 +204,7 @@ switchBlocks(int value)
 		}
 	case 2:
 		{
-			switch (value)
+			switch ( value )
 			{
 			case 3:
 				{
@@ -283,4 +284,92 @@ castSpacing(void* foo)
 {
 	consume((char**) foo);
 	consume((int) 42);
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Wrapped concepts align each requirement with the first.
+template<class T> concept
+LsaString = std::same_as<T, STRING> ||
+			std::same_as<T, UNICODE_STRING> ||
+			std::same_as<T, LSA_STRING> ||
+			std::same_as<T, LSA_UNICODE_STRING>;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+template<class T> concept Small = std::same_as<T, int> || std::same_as<T, char>;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Wrapped logical expressions put each operand on its own line.
+void
+logicalWrapping()
+{
+	if ( firstLongReadinessConditionIsSatisfied() &&
+		 secondLongReadinessConditionIsSatisfied() &&
+		 firstLongReadinessConditionIsSatisfied() )
+	{
+		run();
+	}
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Requires blocks expand before the concept header needs to wrap.
+template<class T> concept HasOperations = requires(T value)
+{
+	value.foo();
+	value.bar();
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Prefer wrapping after concept before splitting logical requirements.
+template<class T> concept
+MediumLengthConceptWithAdditionalDescription = std::same_as<T, UNICODE_STRING> || std::same_as<T, LSA_UNICODE_STRING>;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Requires expressions after logical operators return to declaration indentation.
+template<class T, class C> concept CompatibleLsaString = LsaString<T> && StringCharacter<C> &&
+requires(T& value)
+{
+	{ value.Buffer } -> std::same_as<C*&>;
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+template<class S> concept StringLike = requires(const S& source)
+{
+	source.data();
+	source.size();
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Prefer wrapping logical operands instead of breaking after assignment.
+void
+logicalAssignment()
+{
+	bSuccess = firstReadinessConditionForThisOperationIsSatisfied() &&
+			   secondReadinessConditionForThisOperationIsSatisfied();
+	bSuccess = firstReadinessConditionForThisOperationIsSatisfied() ||
+			   secondReadinessConditionForThisOperationIsSatisfied();
+}
+
+// A blank empty lambda body still formats the space before its parameters.
+auto fnFree = [] (void* pv)
+{
+
+};
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Catch clauses omit spaces inside their parentheses.
+void
+catchSpacing()
+{
+	try
+	{
+		run();
+	}
+	catch (const std::exception& error)
+	{
+		report(error);
+	}
+	catch (...)
+	{
+		reportUnknown();
+	}
 }

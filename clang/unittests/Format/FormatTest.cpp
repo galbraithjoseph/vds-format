@@ -70,6 +70,52 @@ TEST_F(FormatTest, FunctionSeparatorsSkipDeclarationsOnPaste) {
                          {tooling::Range(Begin, Code.find('\n', Begin) - Begin)}));
 }
 
+TEST_F(FormatTest, FunctionSeparatorsRequireDefinitionBody) {
+  FormatStyle Style = getLLVMStyle();
+  Style.FunctionDeclarationSeparatorColumn = 80;
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.AccessModifierOffset = -2;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::ShortFunctionStyle();
+  for (StringRef Header : {"Foo(const Foo)", "void f()", "~Foo()"}) {
+    const std::string Code =
+        "class Foo\n{\n  " + Header.str() + "\nprotected:\n};";
+    EXPECT_EQ(Code, format(Code, Style));
+    const auto Begin = Code.find(Header);
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Begin, Header.size())}));
+  }
+  EXPECT_EQ("void f()", format("void f()", Style));
+  EXPECT_EQ("Foo::Foo(const Foo &other)",
+            format("Foo::Foo(const Foo &other)", Style));
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
+  EXPECT_EQ(Sep + "void f()\n{\n}", format("void f() {}", Style));
+  EXPECT_EQ(Sep + "Foo::Foo(const Foo &other)\n{\n}",
+            format("Foo::Foo(const Foo &other) {}", Style));
+}
+
+TEST_F(FormatTest, ConceptDeclarationSeparators) {
+  FormatStyle Style = getLLVMStyle();
+  Style.FunctionDeclarationSeparatorColumn = 80;
+  const std::string Sep = "//" + std::string(77, '~') + "\n";
+  const std::string Declaration = "template <class T>\nconcept C = A<T>;";
+  const std::string Expected = "int x;\n\n" + Sep + Declaration;
+  EXPECT_EQ(Expected, format("int x;\n" + Declaration, Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
+  EXPECT_EQ(Sep + Declaration, format(Declaration, Style));
+  EXPECT_EQ(Expected, format("int x;\n//~~~\n" + Declaration, Style));
+  const std::string Docs = "int x;\n\n" + Sep + "/// Docs.\n" + Declaration;
+  EXPECT_EQ(Docs, format("int x;\n/// Docs.\n" + Declaration, Style));
+  EXPECT_EQ(Docs, format(Docs, Style));
+  const std::string Two = Sep + Declaration + "\n\n" + Sep + Declaration;
+  EXPECT_EQ(Two, format(Declaration + "\n" + Declaration, Style));
+  EXPECT_EQ(Two, format(Two, Style));
+  EXPECT_EQ("// clang-format off\n" + Declaration,
+            format("// clang-format off\n" + Declaration, Style));
+  const auto Begin = Declaration.find("A<T>");
+  EXPECT_EQ(Declaration, format(Declaration, Style, SC_ExpectComplete,
+                                 {tooling::Range(Begin, 4)}));
+}
+
 TEST_F(FormatTest, FunctionDeclarationSeparatorsAcrossPreprocessorBranches) {
   FormatStyle Style = getLLVMStyle();
   Style.FunctionDeclarationSeparatorColumn = 80;
@@ -155,6 +201,113 @@ TEST_F(FormatTest, FunctionDeclarationSeparatorPrefixesAndLineEndings) {
   EXPECT_EQ(Nested, format(Nested, Style));
 }
 
+TEST_F(FormatTest, ConceptDeclarationWrapPriority) {
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 90;
+  Style.SpaceAfterTemplateKeyword = false;
+  Style.BreakBeforeConceptDeclarations = FormatStyle::BBCDS_Never;
+  Style.BreakAfterConcept = true;
+  Style.BreakBeforeRequiresExpression = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterRequiresExpression = true;
+  Style.BreakBinaryOperations.PerOperator = {
+      {{tok::ampamp, tok::pipepipe}, FormatStyle::BBO_OnePerLine, 0}};
+  verifyFormat("template<class T> concept Short = A<T> || B<T>;", Style);
+  const std::string HeaderWrapped =
+      "template<class T> concept\n"
+      "LsaString = std::same_as<T, STRING> || std::same_as<T, UNICODE_STRING>;";
+  verifyFormat(HeaderWrapped,
+               "template<class T> concept LsaString = std::same_as<T, STRING> || "
+               "std::same_as<T, UNICODE_STRING>;", Style);
+  EXPECT_EQ(HeaderWrapped, format(HeaderWrapped, Style));
+  const std::string LogicalWrapped =
+      "template<class T> concept\n"
+      "LsaString = std::same_as<T, STRING> ||\n"
+      "            std::same_as<T, UNICODE_STRING> ||\n"
+      "            std::same_as<T, LSA_STRING> ||\n"
+      "            std::same_as<T, LSA_UNICODE_STRING>;";
+  verifyFormat(LogicalWrapped,
+               "template<class T> concept LsaString = std::same_as<T, STRING> || "
+               "std::same_as<T, UNICODE_STRING> || std::same_as<T, LSA_STRING> || "
+               "std::same_as<T, LSA_UNICODE_STRING>;", Style);
+  EXPECT_EQ(LogicalWrapped, format(LogicalWrapped, Style));
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  Style.FixNamespaceComments = false;
+  verifyFormat("namespace N {\n"
+               "  template<class T> concept\n"
+               "  LsaString = std::same_as<T, STRING> || std::same_as<T, UNICODE_STRING>;\n"
+               "}", Style);
+  verifyFormat("template<class T> concept C = requires(T t)\n"
+               "{\n"
+               "  t.foo();\n"
+               "  t.bar();\n"
+               "};",
+               "template<class T> concept C = requires(T t) { t.foo(); t.bar(); };",
+               Style);
+}
+
+TEST_F(FormatTest, RequiresExpressionsAtDeclarationIndent) {
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 120;
+  Style.SpaceAfterTemplateKeyword = false;
+  Style.BreakBeforeConceptDeclarations = FormatStyle::BBCDS_Never;
+  Style.BreakBeforeRequiresExpression = true;
+  Style.BreakAfterConcept = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterRequiresExpression = true;
+  Style.BreakBinaryOperations.PerOperator = {
+      {{tok::ampamp, tok::pipepipe}, FormatStyle::BBO_OnePerLine, 0}};
+  const std::string Expected =
+      "template<class T, class C> concept CompatibleLsaString = "
+      "LsaString<T> && StringCharacter<C> &&\n"
+      "requires(T &value)\n"
+      "{\n"
+      "  { value.Buffer } -> std::same_as<C *&>;\n"
+      "};";
+  EXPECT_EQ(Expected, format(
+      "template<class T, class C> concept CompatibleLsaString = LsaString<T> && "
+      "StringCharacter<C> && requires(T& value) { "
+      "{ value.Buffer } -> std::same_as<C*&>; };", Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
+  Style.ColumnLimit = 90;
+  const std::string HeaderWrapped =
+      "template<class T, class C> concept\n"
+      "CompatibleLsaString = LsaString<T> && StringCharacter<C> &&\n"
+      "requires(T &value)\n"
+      "{\n"
+      "  { value.Buffer } -> std::same_as<C *&>;\n"
+      "};";
+  EXPECT_EQ(HeaderWrapped, format(Expected, Style));
+  EXPECT_EQ(HeaderWrapped, format(HeaderWrapped, Style));
+  Style.ColumnLimit = 50;
+  const std::string LogicalWrapped =
+      "template<class T, class C> concept\n"
+      "CompatibleLsaString = LsaString<T> &&\n"
+      "                      StringCharacter<C> &&\n"
+      "requires(T &value)\n"
+      "{\n"
+      "  { value.Buffer } -> std::same_as<C *&>;\n"
+      "};";
+  EXPECT_EQ(LogicalWrapped, format(Expected, Style));
+  EXPECT_EQ(LogicalWrapped, format(LogicalWrapped, Style));
+  Style.ColumnLimit = 120;
+  const std::string Inline =
+      "template<class S> concept StringLike = requires(const S &source)\n"
+      "{\n"
+      "  source.data();\n"
+      "};";
+  EXPECT_EQ(Inline, format(Inline, Style));
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  Style.FixNamespaceComments = false;
+  verifyFormat("namespace N {\n"
+               "  template<class T> concept C = A<T> &&\n"
+               "  requires(T value)\n"
+               "  {\n"
+               "    value.foo();\n"
+               "  };\n"
+               "}", Style);
+}
+
 TEST_F(FormatTest, SpaceBeforeLambdaParameters) {
   FormatStyle Style = getLLVMStyle();
   Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;
@@ -168,6 +321,65 @@ TEST_F(FormatTest, SpaceBeforeLambdaParameters) {
   verifyFormat("void f() { g(x); }", Style);
   Style.SpaceBeforeParensOptions.AfterLambdaCaptureList = false;
   verifyFormat("auto f = [x](int y) { return x + y; };", Style);
+}
+
+TEST_F(FormatTest, IncompleteControlStatementInLambda) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;
+  Style.SpaceBeforeParensOptions.AfterLambdaCaptureList = true;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.BeforeLambdaBody = true;
+  Style.AllowShortLambdasOnASingleLine = FormatStyle::SLS_All;
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  for (StringRef Header : {"if ()", "if ( ready )", "while ()", "switch ()"}) {
+    const std::string Expected =
+        "auto fn = [] (int value)\n{\n  " + Header.str() + "\n};";
+    EXPECT_EQ(Expected, format(Expected, Style));
+    EXPECT_EQ(Expected, format(Expected, Style, SC_ExpectComplete,
+                               {tooling::Range(Expected.find(')', Expected.find('{')), 1)}));
+  }
+}
+
+TEST_F(FormatTest, PartialFormattingPreservesMultilineLambdaBody) {
+  FormatStyle Style = getLLVMStyle();
+  Style.UseTab = FormatStyle::UT_Always;
+  Style.IndentWidth = Style.TabWidth = 4;
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.BraceWrapping.BeforeLambdaBody = true;
+  Style.AllowShortLambdasOnASingleLine = FormatStyle::SLS_All;
+  Style.LambdaBodyIndentation = FormatStyle::LBI_OuterScope;
+  const std::string Code =
+      "void f()\n{\n"
+      "\tfoo([thisRef = BlahBlahBlah(this, false), this]\n"
+      "\t{\n\t\tRunTimers();\n\t});\n}";
+  for (auto Mode : {FormatStyle::ControlStatementBracesStyle::Leave,
+                    FormatStyle::ControlStatementBracesStyle::SingleStatement}) {
+    Style.ControlStatementBraces.Mode = Mode;
+    const auto Semi = Code.find(';');
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Semi, 1)}));
+    const auto Brace = Code.find('{', Code.find("foo"));
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Brace, Semi - Brace + 1)}));
+    EXPECT_NE(std::string::npos,
+              format(Code, Style).find("this] { RunTimers(); });"));
+  }
+}
+
+TEST_F(FormatTest, LambdaSpacingWithPreservedBlankBody) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;
+  Style.SpaceBeforeParensOptions.AfterLambdaCaptureList = true;
+  Style.PointerAlignment = FormatStyle::PAS_Left;
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.BeforeLambdaBody = true;
+  Style.AllowShortLambdasOnASingleLine = FormatStyle::SLS_All;
+  Style.MaxEmptyLinesToKeep = 2;
+  const std::string Input = "auto fnFree = [](void* pv)\n{\n\n};";
+  const std::string Expected = "auto fnFree = [] (void* pv)\n{\n\n};";
+  EXPECT_EQ(Expected, format(Input, Style));
+  EXPECT_EQ(Expected, format(Expected, Style));
 }
 
 TEST_F(FormatTest, SelectiveInnerParenthesisSpacing) {
@@ -203,6 +415,26 @@ TEST_F(FormatTest, SelectiveInnerParenthesisSpacing) {
   verifyFormat("for (x = f( y ); x; ++x)\n  g( x );", Style);
 }
 
+TEST_F(FormatTest, CatchInnerParenthesisSpacing) {
+  FormatStyle Style = getLLVMStyle();
+  Style.SpacesInParens = FormatStyle::SIPO_Custom;
+  Style.SpacesInParensOptions.InConditionalStatements = true;
+  verifyFormat("try {\n} catch ( ... ) {\n}", Style);
+  Style.SpacesInParensOptions.ExceptCatchClauses = true;
+  for (StringRef Declaration : {"...", "const std::exception &error", "Error &",
+                                "int error"}) {
+    const std::string Expected =
+        "try {\n} catch (" + Declaration.str() + ") {\n}";
+    EXPECT_EQ(Expected, format("try {} catch ( " + Declaration.str() + " ) {}", Style));
+    EXPECT_EQ(Expected, format(Expected, Style));
+  }
+  verifyFormat("if ( ready )\n  f();", Style);
+  Style.SpacesInParensOptions.Other = true;
+  verifyFormat("try {\n} catch (...) {\n}", Style);
+  Style.SpacesInParensOptions.ExceptCatchClauses = false;
+  verifyFormat("try {\n} catch ( ... ) {\n}", Style);
+}
+
 TEST_F(FormatTest, SwitchInnerParenthesisSpacing) {
   FormatStyle Style = getLLVMStyle();
   Style.SpacesInParens = FormatStyle::SIPO_Custom;
@@ -224,6 +456,26 @@ TEST_F(FormatTest, SwitchInnerParenthesisSpacing) {
   Style.SpacesInParensOptions = {};
   Style.SpacesInParensOptions.ExceptSwitchStatements = true;
   verifyFormat("switch (x) {\ndefault:\n  break;\n}", Style);
+}
+
+TEST_F(FormatTest, IncompleteMemberBeforeAccessSpecifier) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.AccessModifierOffset = -2;
+  for (StringRef Access : {"public", "protected", "private"}) {
+    const std::string Code =
+        "class Widget\n{\n  Widget\n" + Access.str() + ":\n};";
+    EXPECT_EQ(Code, format(Code, Style));
+    const auto Begin = Code.find("Widget", Code.find('{'));
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Begin, 6)}));
+    const std::string Unindented =
+        "class Widget\n{\nWidget\n" + Access.str() + ":\n};";
+    EXPECT_EQ(Code, format(Unindented, Style, SC_ExpectComplete,
+                            {tooling::Range(Unindented.find("Widget", Unindented.find('{')), 6)}));
+  }
+  verifyFormat("class Widget : public Base\n{\n};", Style);
+  verifyFormat("class Widget\n{\n  Widget();\n\nprotected:\n};", Style);
 }
 
 TEST_F(FormatTest, MessUp) {

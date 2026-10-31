@@ -50,7 +50,22 @@ initializer lists keep the colon on the signature line and put each initializer
 on its own line, indented four columns. Function definitions put return types
 on their own line; declarations keep the return type and function name together
 when they fit within the column limit. Template declarations use
-`template<class X>` spacing and always break before the following declaration.
+`template<class X>` spacing and break before the following declaration, except
+concept declarations. Short concepts stay on one line. Requires expressions
+after logical operators start at the declaration indentation on a new line.
+A requires expression directly after `=` stays on the same line when its header
+fits. Requires braces stay on separate lines. The required break before `requires`
+does not force preceding logical operands to split when they fit together. If the remaining
+concept declaration is too long, it first wraps after `concept`, before the
+name, without an extra continuation indent. Only constraints that still do not fit split their logical operands onto
+separate lines, aligned with the first operand. Operators end the preceding
+line. Other wrapped `&&` and `||` expressions also use one operand per line.
+`PenaltyBreakAssignment: 1000` prefers breaks between logical operands over a
+break after `=`, keeping the assignment and its first operand together when
+they fit.
+This uses `BreakBeforeConceptDeclarations: Never`, `BreakAfterConcept: true`,
+`BreakBeforeRequiresExpression: true`, `AlignOperands: Align`, and
+`BreakBinaryOperations.PerOperator` rules for the two logical operators.
 Up to two consecutive blank lines are
 preserved. Trailing `//` comments preserve the existing tabs and spaces between code and
 comment via `AlignTrailingComments: { Kind: Leave }`. C-style casts have a space before the expression via
@@ -104,7 +119,8 @@ remove them safely.
 ## Function separators — [issue #4](https://github.com/galbraithjoseph/vds-format/issues/4)
 
 `FunctionDeclarationSeparatorColumn: 80` adds a standalone separator before
-function definitions, above attached documentation. Declarations without bodies,
+function definitions and concept declarations, above attached documentation.
+Concept separators have a blank line above them, except at the start of a file. Declarations without bodies,
 including class member declarations, do not receive separators. Its first
 slash aligns with the first line of the declaration (including template and
 attribute prefixes), and its final tilde ends at display column 79, leaving column 80 empty. The slashes
@@ -146,10 +162,10 @@ opt-in and ignored unless `SpacesInParens: Custom` is enabled. Other control
 statements retain their existing conditional spacing; the for exception also
 applies to for headers in other supported languages.
 
-`ExceptSwitchStatements: true` similarly produces `switch (x)` while keeping
-spaces inside if/while conditions. It overrides `InConditionalStatements` and
-`Other`, defaults to false, and leaves the space before `(` unchanged. The
-`switchSpacing` fixture demonstrates this alongside `ASSERT` and `VERIFY`.
+`InConditionalStatements: true` and `ExceptSwitchStatements: false` produce
+`switch ( x )` and `while ( ready )`, with a space before the opening parenthesis
+and inside both parentheses. The `switchSpacing` fixture demonstrates this
+alongside `ASSERT` and `VERIFY`.
 
 Switch labels (`case` and `default`) align with the `switch` statement and its
 braces via `IndentCaseLabels: false`. Braced case bodies indent their opening
@@ -162,3 +178,10 @@ labels, braced cases, default blocks, and nested switches.
 The custom brace settings retain Allman placement elsewhere and set
 `BraceWrapping.AfterEnum: true`; multiline enums put their opening brace
 on its own line.
+
+`SpacesInParensOptions.ExceptCatchClauses: true` removes inner spaces from
+all catch clauses, including `catch (...)` and typed exception handlers, while
+if/while conditions keep their configured spaces.
+
+`IndentPPDirectives: None` keeps preprocessor directive hashes in column 1,
+including directives inside namespaces and nested conditional blocks.

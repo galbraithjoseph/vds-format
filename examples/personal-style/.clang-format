@@ -14,7 +14,19 @@ Cpp11BracedListStyle: Block
 PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
+IndentPPDirectives: None
 FixNamespaceComments: false
+BreakBeforeConceptDeclarations: Never
+BreakAfterConcept: true
+BreakBeforeRequiresExpression: true
+BreakBeforeBinaryOperators: None
+AlignOperands: Align
+PenaltyBreakAssignment: 1000
+BreakBinaryOperations:
+  Default: Never
+  PerOperator:
+    - Operators: ['&&', '||']
+      Style: OnePerLine
 BreakTemplateDeclarations: Yes
 BreakAfterReturnType: AllDefinitions
 SpaceAfterTemplateKeyword: false
@@ -66,8 +78,9 @@ SpacesInParens: Custom
 SpacesInParensOptions:
   InConditionalStatements: true
   ExceptForLoops: true
-  ExceptSwitchStatements: true
-  InNamedCalls: [ASSERT, VERIFY]
+  ExceptSwitchStatements: false
+  ExceptCatchClauses: true
+  InNamedCalls: [ASSERT, VERIFY, CPPUNIT_ASSERT, CPPUNIT_ASSERT_EQUAL, Q_ASSERT, TestAssert]
   InCStyleCasts: false
   InEmptyParentheses: false
   Other: false

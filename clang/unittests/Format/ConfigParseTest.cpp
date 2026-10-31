@@ -244,6 +244,8 @@ TEST(ConfigParseTest, GetsCorrectBasedOnStyle) {
 TEST(ConfigParseTest, ParsesConfigurationBools) {
   FormatStyle Style = {};
   Style.Language = FormatStyle::LK_Cpp;
+  CHECK_PARSE_BOOL(BreakAfterConcept);
+  CHECK_PARSE_BOOL(BreakBeforeRequiresExpression);
   CHECK_PARSE_BOOL(AllowAllArgumentsOnNextLine);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
   CHECK_PARSE_BOOL(AllowBreakBeforeQtProperty);
@@ -362,6 +364,7 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, Other);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptForLoops);
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptSwitchStatements);
+  CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, ExceptCatchClauses);
   const std::vector<std::string> NamedCalls = {"ASSERT", "VERIFY"};
   CHECK_PARSE("SpacesInParensOptions: {InNamedCalls: [ASSERT, VERIFY]}",
               SpacesInParensOptions.InNamedCalls, NamedCalls);

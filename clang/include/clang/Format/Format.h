@@ -2529,6 +2529,20 @@ struct FormatStyle {
   /// \version 12
   BreakBeforeConceptDeclarationsStyle BreakBeforeConceptDeclarations;
 
+  /// Prefer a break after ``concept`` and before its name when a C++ concept
+  /// declaration exceeds the column limit. The name aligns with the declaration
+  /// indentation. Short declarations stay together.
+  /// Logical constraints wrap only if they still do not fit after this break.
+  /// \version 24
+  bool BreakAfterConcept;
+
+  /// Start C++ requires expressions at the declaration indentation. Expressions
+  /// directly following ``=`` may stay on the same line when they fit; other
+  /// requires expressions start on a new line. Brace placement is controlled
+  /// separately by ``BraceWrapping.AfterRequiresExpression``.
+  /// \version 24
+  bool BreakBeforeRequiresExpression;
+
   /// Different ways to break ASM parameters.
   enum BreakBeforeInlineASMColonStyle : int8_t {
     /// No break before inline ASM colon.
@@ -5174,7 +5188,9 @@ struct FormatStyle {
   SeparateDefinitionStyle SeparateDefinitionBlocks;
 
   /// Exclusive end column (one-based) of a standalone ``//`` plus tildes separator
-  /// before C/C++ function definitions. Declarations without bodies are skipped.
+  /// before C/C++ function definitions and C++ concept declarations. Concepts
+  /// receive a blank line before the separator, except at the start of a file.
+  /// Function declarations without bodies are skipped.
   /// Zero disables this
   /// option. For example, 80 leaves column 80 empty and emits 77 tildes at zero indentation, or 73 at
   /// four columns of indentation. Tabs count as display columns.
@@ -5957,6 +5973,10 @@ struct FormatStyle {
     /// InEmptyParentheses. Applies only with SpacesInParens: Custom and does
     /// not change spacing before the opening parenthesis.
     bool ExceptSwitchStatements = false;
+    /// Omit inner spaces in catch clauses, including catch-all clauses,
+    /// overriding InConditionalStatements and Other. Applies only with
+    /// SpacesInParens: Custom; spacing before parentheses is unchanged.
+    bool ExceptCatchClauses = false;
     /// Insert inner spaces in calls whose final identifier exactly matches an
     /// entry (case sensitive), including qualified/member calls. Declarations
     /// and macro definitions are excluded. Overrides Other; empty calls follow
@@ -6005,6 +6025,7 @@ struct FormatStyle {
              InConditionalStatements == R.InConditionalStatements &&
              ExceptForLoops == R.ExceptForLoops &&
              ExceptSwitchStatements == R.ExceptSwitchStatements &&
+             ExceptCatchClauses == R.ExceptCatchClauses &&
              InNamedCalls == R.InNamedCalls &&
              InCStyleCasts == R.InCStyleCasts &&
              InEmptyParentheses == R.InEmptyParentheses && Other == R.Other;
@@ -6370,6 +6391,8 @@ struct FormatStyle {
            BreakBeforeCloseBracketLoop == R.BreakBeforeCloseBracketLoop &&
            BreakBeforeCloseBracketSwitch == R.BreakBeforeCloseBracketSwitch &&
            BreakBeforeConceptDeclarations == R.BreakBeforeConceptDeclarations &&
+           BreakAfterConcept == R.BreakAfterConcept &&
+           BreakBeforeRequiresExpression == R.BreakBeforeRequiresExpression &&
            BreakBeforeInlineASMColon == R.BreakBeforeInlineASMColon &&
            BreakBeforeReturnType == R.BreakBeforeReturnType &&
            BreakBeforeTemplateCloser == R.BreakBeforeTemplateCloser &&

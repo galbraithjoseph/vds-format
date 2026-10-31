@@ -1061,6 +1061,7 @@ template <> struct MappingTraits<FormatStyle::SpacesInParensCustom> {
     IO.mapOptional("InConditionalStatements", Spaces.InConditionalStatements);
     IO.mapOptional("ExceptForLoops", Spaces.ExceptForLoops);
     IO.mapOptional("ExceptSwitchStatements", Spaces.ExceptSwitchStatements);
+    IO.mapOptional("ExceptCatchClauses", Spaces.ExceptCatchClauses);
     IO.mapOptional("InNamedCalls", Spaces.InNamedCalls);
     IO.mapOptional("InEmptyParentheses", Spaces.InEmptyParentheses);
     IO.mapOptional("Other", Spaces.Other);
@@ -1407,6 +1408,9 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.BreakBeforeCloseBracketLoop);
     IO.mapOptional("BreakBeforeCloseBracketSwitch",
                    Style.BreakBeforeCloseBracketSwitch);
+    IO.mapOptional("BreakAfterConcept", Style.BreakAfterConcept);
+    IO.mapOptional("BreakBeforeRequiresExpression",
+                   Style.BreakBeforeRequiresExpression);
     IO.mapOptional("BreakBeforeConceptDeclarations",
                    Style.BreakBeforeConceptDeclarations);
     IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
@@ -2002,6 +2006,8 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.BreakBeforeCloseBracketLoop = false;
   LLVMStyle.BreakBeforeCloseBracketSwitch = false;
   LLVMStyle.BreakBeforeConceptDeclarations = FormatStyle::BBCDS_Always;
+  LLVMStyle.BreakAfterConcept = false;
+  LLVMStyle.BreakBeforeRequiresExpression = false;
   LLVMStyle.BreakBeforeInlineASMColon = FormatStyle::BBIAS_OnlyMultiline;
   LLVMStyle.BreakBeforeReturnType = FormatStyle::BBRTS_None;
   LLVMStyle.BreakBeforeTemplateCloser = false;
@@ -2788,11 +2794,19 @@ private:
       if (Line->InPPDirective || Line->InMacroBody || Line->First->Finalized)
         continue;
       bool Function = false;
+      bool FunctionBody = false;
+      bool Concept = false;
       for (auto *Tok = Line->First; Tok; Tok = Tok->Next) {
         Function |=
             Tok->isOneOf(TT_FunctionDeclarationName, TT_CtorDtorDeclName);
+        FunctionBody |= Tok->is(TT_FunctionLBrace);
+        Concept |= Tok->is(tok::kw_concept);
       }
-      if (!Function || Line->endsWith(tok::semi))
+      // An unfinished declaration need not end in a semicolon. Require a
+      // function-body brace, either attached or on the following Allman line.
+      FunctionBody |= I + 1 < Lines.size() &&
+                      Lines[I + 1]->First->is(TT_FunctionLBrace);
+      if (!Concept && (!Function || !FunctionBody))
         continue;
       const unsigned Column = Line->First->OriginalColumn;
       if (Column >= Style.FunctionDeclarationSeparatorColumn ||
@@ -2838,6 +2852,11 @@ private:
           Indent.str() + "//" +
           std::string(Style.FunctionDeclarationSeparatorColumn - Column - 3,
                       '~');
+      if (Concept && Begin > 0) {
+        const unsigned PreviousLineStart = LineStart(Begin - 1);
+        if (!Code.slice(PreviousLineStart, Begin).trim().empty())
+          Separator.insert(0, Newline.str());
+      }
       if (IsSeparator(First)) {
         const unsigned OldEnd = SM.getFileOffset(First->Tok.getEndLoc());
         if (Code.slice(Begin, OldEnd) != Separator) {

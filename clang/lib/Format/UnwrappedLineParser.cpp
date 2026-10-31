@@ -1862,6 +1862,15 @@ void UnwrappedLineParser::parseStructuralElement(
            OpeningBrace && OpeningBrace->isOneOf(TT_RequiresExpressionLBrace,
                                                  TT_CompoundRequirementLBrace);
        !eof();) {
+    // Recover an unfinished member declaration while typing or pasting. An
+    // access label on its own source line starts a new declaration even if the
+    // preceding member name does not yet have its parentheses or semicolon.
+    if (Style.isCpp() && !Line->Tokens.empty() &&
+        FormatTok->HasUnescapedNewline && FormatTok->isAccessSpecifierKeyword() &&
+        Tokens->peekNextToken(/*SkipComment=*/true)->is(tok::colon)) {
+      addUnwrappedLine();
+      return;
+    }
     const FormatToken *Previous = FormatTok->Previous;
     switch (FormatTok->Tok.getKind()) {
     case tok::at:

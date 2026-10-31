@@ -1,0 +1,1 @@
+# RUN: %python %S/Inputs/access-label-range-editor.py clang-format %t.h

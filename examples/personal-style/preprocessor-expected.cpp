@@ -27,3 +27,16 @@ afterConditionalBody(bool ready)
 	while ( ready )
 		wait();
 }
+
+// Preprocessor hashes stay in column 1, including nested conditions.
+namespace DirectiveExample
+{
+#if defined(FEATURE)
+#define FEATURE_VALUE 1
+#if defined(NESTED_FEATURE)
+#pragma message("nested feature")
+#endif
+#else
+#define FEATURE_VALUE 0
+#endif
+}

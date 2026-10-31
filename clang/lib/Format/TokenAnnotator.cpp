@@ -4428,6 +4428,33 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) const {
     }
   }
 
+  if (Style.isCpp() && Style.BreakAfterConcept && Style.ColumnLimit > 0) {
+    FormatToken *ConceptName = nullptr;
+    const FormatToken *SegmentEnd = Line.Last;
+    for (auto *Tok = First; Tok; Tok = Tok->Next) {
+      if (Tok->is(tok::kw_concept))
+        ConceptName = Tok->Next;
+      if (ConceptName && Style.BreakBeforeRequiresExpression &&
+          Tok->is(TT_RequiresExpression)) {
+        SegmentEnd = Tok->Previous;
+        if (SegmentEnd && SegmentEnd->is(tok::equal)) {
+          SegmentEnd = Tok;
+          while (SegmentEnd->Next &&
+                 SegmentEnd->Next->isNot(TT_RequiresExpressionLBrace))
+            SegmentEnd = SegmentEnd->Next;
+        }
+        break;
+      }
+    }
+    if (ConceptName && SegmentEnd &&
+        Line.Level * Style.IndentWidth + SegmentEnd->TotalLength >
+            Style.ColumnLimit) {
+      ConceptName->MustBreakBefore = ConceptName->CanBreakBefore = true;
+      for (auto *Tok = ConceptName; Tok; Tok = Tok->Next)
+        Tok->TotalLength += Style.ColumnLimit;
+    }
+  }
+
   calculateUnbreakableTailLengths(Line);
   unsigned IndentLevel = Line.Level;
   for (auto *Current = First; Current; Current = Current->Next) {
@@ -4508,6 +4535,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   const FormatToken &Left = *Tok.Previous;
   const FormatToken &Right = Tok;
 
+  if (Style.BreakAfterConcept && Left.is(tok::kw_concept))
+    return 0;
   if (Left.is(tok::semi))
     return 0;
 
@@ -4776,6 +4805,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       LeftParen = Right.MatchingParen;
     if (LeftParen && LeftParen->Previous) {
       const auto *Name = LeftParen->Previous;
+      if (Style.SpacesInParensOptions.ExceptCatchClauses &&
+          Name->is(tok::kw_catch))
+        return false;
       if (Style.SpacesInParensOptions.ExceptForLoops && Name->is(tok::kw_for))
         return false;
       if (Style.SpacesInParensOptions.ExceptSwitchStatements &&
@@ -5879,8 +5911,44 @@ static bool isAllmanLambdaBrace(const FormatToken &Tok) {
          Tok.isNoneOf(TT_ObjCBlockLBrace, TT_DictLiteral);
 }
 
+static bool hasIncompleteLambdaControlStatement(const FormatToken &Brace) {
+  if (!Brace.is(TT_LambdaLBrace) || Brace.Children.size() != 1)
+    return false;
+  const auto *Child = Brace.Children.front();
+  return Child->First->isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
+                               tok::kw_switch) &&
+         Child->endsWith(tok::r_paren);
+}
+
 bool TokenAnnotator::mustBreakBefore(AnnotatedLine &Line,
                                      const FormatToken &Right) const {
+  // On-type editors may apply only in-range edits. Keep a multiline lambda's
+  // brace/body breaks together unless its enclosing statement is fully covered.
+  if (Style.BraceWrapping.BeforeLambdaBody && !Line.AllTokensAffected) {
+    const auto *Brace = Right.is(TT_LambdaLBrace) ? &Right
+                        : Right.is(tok::r_brace) ? Right.MatchingParen
+                                                : nullptr;
+    if (Brace && Brace->is(TT_LambdaLBrace) && !Brace->Children.empty() &&
+        Brace->Children.front()->First->NewlinesBefore > 0)
+      return true;
+  }
+
+  if (Style.BraceWrapping.BeforeLambdaBody &&
+      (hasIncompleteLambdaControlStatement(Right) ||
+       (Right.is(tok::r_brace) && Right.MatchingParen &&
+        hasIncompleteLambdaControlStatement(*Right.MatchingParen))))
+    return true;
+  if (Style.isCpp() && Style.BreakBeforeRequiresExpression &&
+      Style.BraceWrapping.AfterRequiresExpression &&
+      (Right.is(TT_RequiresExpressionLBrace) ||
+       (Right.is(tok::r_brace) && Right.MatchingParen &&
+        Right.MatchingParen->is(TT_RequiresExpressionLBrace))))
+    return true;
+  if (Style.isCpp() && Style.BreakBeforeRequiresExpression &&
+      Right.is(TT_RequiresExpression) &&
+      Right.getPreviousNonComment() &&
+      Right.getPreviousNonComment()->isNot(tok::equal))
+    return true;
   if (Right.NewlinesBefore > 1 && Style.MaxEmptyLinesToKeep > 0 &&
       (!Style.RemoveEmptyLinesInUnwrappedLines || &Right == Line.First)) {
     return true;
@@ -6387,6 +6455,8 @@ bool TokenAnnotator::mustBreakBefore(AnnotatedLine &Line,
 bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                     const FormatToken &Right) const {
   const FormatToken &Left = *Right.Previous;
+  if (Style.isCpp() && Style.BreakAfterConcept && Left.is(tok::kw_concept))
+    return true;
   // Language-specific stuff.
   if (Style.isCSharp()) {
     if (Left.isOneOf(TT_CSharpNamedArgumentColon, TT_AttributeColon) ||
@@ -6778,6 +6848,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
 
   auto ShortLambdaOption = Style.AllowShortLambdasOnASingleLine;
   if (Style.BraceWrapping.BeforeLambdaBody && Right.is(TT_LambdaLBrace)) {
+    // A preserved blank line prevents an empty lambda from being collapsed.
+    // Keep the brace break available so the signature can still be formatted.
+    if (Style.MaxEmptyLinesToKeep > 0 && Right.Children.empty() &&
+        Right.MatchingParen && Right.MatchingParen->NewlinesBefore > 1)
+      return true;
     if (isAllmanLambdaBrace(Left))
       return !isEmptyLambdaAllowed(Left, ShortLambdaOption);
     if (isAllmanLambdaBrace(Right))
