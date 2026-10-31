@@ -179,7 +179,7 @@ functionNameLongEnoughToForceAllParametersOntoTheNextLineWithoutPackingThemToget
 void
 switchSpacing(int value)
 {
-	switch (value)
+	switch ( value )
 	{
 	case 0:
 		ASSERT( value );
@@ -194,7 +194,7 @@ switchSpacing(int value)
 void
 switchBlocks(int value)
 {
-	switch (value)
+	switch ( value )
 	{
 	case 0:
 	case 1:
@@ -204,7 +204,7 @@ switchBlocks(int value)
 		}
 	case 2:
 		{
-			switch (value)
+			switch ( value )
 			{
 			case 3:
 				{

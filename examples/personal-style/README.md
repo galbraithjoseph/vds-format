@@ -162,10 +162,10 @@ opt-in and ignored unless `SpacesInParens: Custom` is enabled. Other control
 statements retain their existing conditional spacing; the for exception also
 applies to for headers in other supported languages.
 
-`ExceptSwitchStatements: true` similarly produces `switch (x)` while keeping
-spaces inside if/while conditions. It overrides `InConditionalStatements` and
-`Other`, defaults to false, and leaves the space before `(` unchanged. The
-`switchSpacing` fixture demonstrates this alongside `ASSERT` and `VERIFY`.
+`InConditionalStatements: true` and `ExceptSwitchStatements: false` produce
+`switch ( x )` and `while ( ready )`, with a space before the opening parenthesis
+and inside both parentheses. The `switchSpacing` fixture demonstrates this
+alongside `ASSERT` and `VERIFY`.
 
 Switch labels (`case` and `default`) align with the `switch` statement and its
 braces via `IndentCaseLabels: false`. Braced case bodies indent their opening

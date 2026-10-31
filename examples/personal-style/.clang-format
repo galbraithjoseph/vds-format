@@ -77,7 +77,7 @@ SpacesInParens: Custom
 SpacesInParensOptions:
   InConditionalStatements: true
   ExceptForLoops: true
-  ExceptSwitchStatements: true
+  ExceptSwitchStatements: false
   ExceptCatchClauses: true
   InNamedCalls: [ASSERT, VERIFY]
   InCStyleCasts: false
