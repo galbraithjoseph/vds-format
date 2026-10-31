@@ -198,6 +198,9 @@ public:
   /// indirectly with one of the input ranges.
   bool Affected;
 
+  /// True if every direct token intersects a requested formatting range.
+  bool AllTokensAffected = false;
+
   /// \c True if the leading empty lines of this line intersect with one of the
   /// input ranges.
   bool LeadingEmptyLinesAffected;

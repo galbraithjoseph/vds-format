@@ -318,6 +318,32 @@ TEST_F(FormatTest, IncompleteControlStatementInLambda) {
   }
 }
 
+TEST_F(FormatTest, PartialFormattingPreservesMultilineLambdaBody) {
+  FormatStyle Style = getLLVMStyle();
+  Style.UseTab = FormatStyle::UT_Always;
+  Style.IndentWidth = Style.TabWidth = 4;
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  Style.BraceWrapping.BeforeLambdaBody = true;
+  Style.AllowShortLambdasOnASingleLine = FormatStyle::SLS_All;
+  Style.LambdaBodyIndentation = FormatStyle::LBI_OuterScope;
+  const std::string Code =
+      "void f()\n{\n"
+      "\tfoo([thisRef = BlahBlahBlah(this, false), this]\n"
+      "\t{\n\t\tRunTimers();\n\t});\n}";
+  for (auto Mode : {FormatStyle::ControlStatementBracesStyle::Leave,
+                    FormatStyle::ControlStatementBracesStyle::SingleStatement}) {
+    Style.ControlStatementBraces.Mode = Mode;
+    const auto Semi = Code.find(';');
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Semi, 1)}));
+    const auto Brace = Code.find('{', Code.find("foo"));
+    EXPECT_EQ(Code, format(Code, Style, SC_ExpectComplete,
+                            {tooling::Range(Brace, Semi - Brace + 1)}));
+    EXPECT_NE(std::string::npos,
+              format(Code, Style).find("this] { RunTimers(); });"));
+  }
+}
+
 TEST_F(FormatTest, LambdaSpacingWithPreservedBlankBody) {
   FormatStyle Style = getLLVMStyle();
   Style.SpaceBeforeParens = FormatStyle::SBPO_Custom;

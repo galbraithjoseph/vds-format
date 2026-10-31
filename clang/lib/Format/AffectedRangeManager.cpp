@@ -94,6 +94,7 @@ void AffectedRangeManager::markAllAsAffected(
     ArrayRef<AnnotatedLine *>::iterator E) {
   while (I != E) {
     (*I)->Affected = true;
+    (*I)->AllTokensAffected = true;
     markAllAsAffected((*I)->Children.begin(), (*I)->Children.end());
     ++I;
   }
@@ -118,10 +119,13 @@ bool AffectedRangeManager::nonPPLineAffected(
   bool SomeFirstChildAffected = false;
 
   assert(Line->First);
+  Line->AllTokensAffected = true;
   for (FormatToken *Tok = Line->First; Tok; Tok = Tok->Next) {
     // Determine whether 'Tok' was affected.
-    if (affectsTokenRange(*Tok, *Tok, IncludeLeadingNewlines))
-      SomeTokenAffected = true;
+    const bool TokenAffected =
+        affectsTokenRange(*Tok, *Tok, IncludeLeadingNewlines);
+    SomeTokenAffected |= TokenAffected;
+    Line->AllTokensAffected &= TokenAffected;
 
     // Determine whether the first child of 'Tok' was affected.
     if (!Tok->Children.empty() && Tok->Children.front()->Affected)
