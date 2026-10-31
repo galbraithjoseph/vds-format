@@ -465,6 +465,46 @@ splitBraceRemovalEdits(StringRef Code, const Replacements &Replaces,
   return Result;
 }
 
+// Keep unchanged whitespace outside an editor range out of the edit. Otherwise
+// a leading newline can make an in-range indentation correction get discarded.
+static Replacements trimBoundaryWhitespaceEdits(
+    StringRef Code, const Replacements &Replaces,
+    ArrayRef<clang::tooling::Range> Ranges) {
+  auto Inside = [&](unsigned Offset, unsigned Length) {
+    return llvm::any_of(Ranges, [&](const clang::tooling::Range &Range) {
+      return Offset >= Range.getOffset() &&
+             Offset + Length <= Range.getOffset() + Range.getLength();
+    });
+  };
+  Replacements Result;
+  for (const auto &Replace : Replaces) {
+    unsigned Offset = Replace.getOffset();
+    StringRef Removed = Code.substr(Offset, Replace.getLength());
+    StringRef Text = Replace.getReplacementText();
+    if (!Inside(Offset, Removed.size()) &&
+        Removed.find_first_not_of(" \t\r\n") == StringRef::npos &&
+        Text.find_first_not_of(" \t\r\n") == StringRef::npos) {
+      while (!Removed.empty() && !Text.empty() && Removed.front() == Text.front()) {
+        ++Offset;
+        Removed = Removed.drop_front();
+        Text = Text.drop_front();
+      }
+      while (!Removed.empty() && !Text.empty() && Removed.back() == Text.back()) {
+        Removed = Removed.drop_back();
+        Text = Text.drop_back();
+      }
+      if (Inside(Offset, Removed.size())) {
+        if (!Removed.empty() || !Text.empty())
+          cantFail(Result.add(clang::tooling::Replacement(
+              Replace.getFilePath(), Offset, Removed.size(), Text)));
+        continue;
+      }
+    }
+    cantFail(Result.add(Replace));
+  }
+  return Result;
+}
+
 // Returns true on error.
 static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
   const bool IsSTDIN = FileName == "-";
@@ -573,6 +613,8 @@ static bool format(StringRef FileName, bool ErrorOnIncompleteFormat = false) {
       FormatStyle::ControlStatementBracesStyle::Leave)
     Replaces =
         splitBraceRemovalEdits(Code->getBuffer(), Replaces, RequestedRanges);
+  Replaces = trimBoundaryWhitespaceEdits(Code->getBuffer(), Replaces,
+                                         RequestedRanges);
   const unsigned OutputCursorPosition =
       shiftedCursorPosition(*ChangedCode, FormatChanges, CursorPosition);
   if (DryRun) {
