@@ -17,6 +17,31 @@ namespace {
 
 class FormatTest : public test::FormatTestBase {};
 
+TEST_F(FormatTest, BreakDesignatedInitializers) {
+  auto Style = getLLVMStyle();
+  Style.Cpp11BracedListStyle = FormatStyle::BLS_Block;
+  Style.BreakDesignatedInitializers = true;
+  verifyFormat("T foo\n{\n  .a = 1,\n  .b = 2\n};", Style);
+  EXPECT_EQ("T foo\n{\n  .a = 1,\n  .b = 2\n};",
+            format("T foo{.a=1,.b=2};", Style));
+  EXPECT_EQ("T foo\n{\n  .a = 1\n};", format("T foo{.a=1};", Style));
+  EXPECT_EQ("T foo =\n{\n  .a = 1,\n  .b = 2\n};",
+            format("T foo = {.a=1,.b=2};", Style));
+  verifyFormat("void f() {\n  T foo\n  {\n    .a = 1,\n    .b = 2\n  };\n}", Style);
+  verifyFormat("T foo\n{\n  // First member.\n  .a = 1, // Value.\n  .b = 2\n};", Style);
+  verifyFormat("T foo\n{\n  .a =\n  {\n    .x = 1,\n    .y = 2\n  },\n  .b = 2\n};", Style);
+  verifyFormat("int values[] =\n{\n  [0] = 1,\n  [1] = 2\n};", Style);
+  Style.UseTab = FormatStyle::UT_Always;
+  Style.IndentWidth = Style.TabWidth = 4;
+  verifyFormat("T foo\n{\n\t.a = 1,\n\t.b = 2\n};", Style);
+  Style = getLLVMStyle();
+  Style.Cpp11BracedListStyle = FormatStyle::BLS_Block;
+  Style.BreakDesignatedInitializers = true;
+  verifyFormat("T foo{ 1, 2 };", Style);
+  Style.BreakDesignatedInitializers = false;
+  verifyFormat("T foo{ .a = 1, .b = 2 };", Style);
+}
+
 TEST_F(FormatTest, DefinitionReturnTypeBreakWaitsForBody) {
   auto Style = getLLVMStyle();
   Style.BreakAfterReturnType = FormatStyle::RTBS_AllDefinitions;

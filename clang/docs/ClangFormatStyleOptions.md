@@ -2730,6 +2730,21 @@ the configuration (without a prefix: `Auto`).
     ```
 
 
+(breakdesignatedinitializers)=
+
+**BreakDesignatedInitializers** (`Boolean`) {versionbadge}`clang-format 23`
+
+  Put designated initializer braces and each member on separate lines.
+  Ordinary positional initializer lists are unchanged. Defaults to `false`.
+
+  ```c++
+  T value
+  {
+    .a = 1,
+    .b = 2
+  };
+  ```
+
 (bracedinitializerindentwidth)=
 
 **BracedInitializerIndentWidth** (`Integer`) {versionbadge}`clang-format 17` {ref}`¶ <BracedInitializerIndentWidth>`

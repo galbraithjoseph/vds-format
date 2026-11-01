@@ -402,6 +402,7 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   const FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *Current.Previous;
   const auto &CurrentState = State.Stack.back();
+
   assert(&Previous == Current.Previous);
   if (!Current.CanBreakBefore && !(CurrentState.BreakBeforeClosingBrace &&
                                    Current.closesBlockOrBlockTypeList(Style))) {
@@ -1511,6 +1512,18 @@ ContinuationIndenter::getNewLineColumn(const LineState &State) {
   FormatToken &Current = *State.NextToken;
   const auto &CurrentState = State.Stack.back();
 
+  if (Style.isCpp() && Style.BreakDesignatedInitializers) {
+    const auto *Brace = Current.is(tok::l_brace)   ? &Current
+                        : Current.is(tok::r_brace) ? Current.MatchingParen
+                                                  : nullptr;
+    if (Brace && Brace->startsDesignatedInitializerList()) {
+      if (Current.is(tok::r_brace))
+        return CurrentState.Indent - Style.IndentWidth;
+      return Brace->NestingLevel == 0 ? State.FirstIndent : CurrentState.Indent;
+    }
+  }
+
+
   if (CurrentState.IsCSharpGenericTypeConstraint &&
       Current.isNot(TT_CSharpGenericTypeConstraint)) {
     return CurrentState.ColonPos + 2;
@@ -2197,7 +2210,11 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
                                         CurrentState.NestedBlockIndent);
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) ||
       opensProtoMessageField(Current, Style)) {
-    if (Current.opensBlockOrBlockTypeList(Style)) {
+    if (Style.isCpp() && Style.BreakDesignatedInitializers &&
+        Current.startsDesignatedInitializerList()) {
+      NewIndent = State.Column + Style.IndentWidth;
+      NestedBlockIndent = State.Column;
+    } else if (Current.opensBlockOrBlockTypeList(Style)) {
       NewIndent = Style.IndentWidth +
                   std::min(State.Column, CurrentState.NestedBlockIndent);
     } else if (Current.is(tok::l_brace)) {

@@ -11,6 +11,7 @@ BreakConstructorInitializers: AfterColon
 PackConstructorInitializers: Never
 ConstructorInitializerIndentWidth: 4
 Cpp11BracedListStyle: Block
+BreakDesignatedInitializers: true
 PointerAlignment: Left
 ReferenceAlignment: Left
 NamespaceIndentation: All
