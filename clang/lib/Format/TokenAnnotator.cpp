@@ -5923,6 +5923,19 @@ static bool hasIncompleteLambdaControlStatement(const FormatToken &Brace) {
 
 bool TokenAnnotator::mustBreakBefore(AnnotatedLine &Line,
                                      const FormatToken &Right) const {
+  if (Style.isCpp() && Style.BreakDesignatedInitializers) {
+    const auto IsDesignatedList = [](const FormatToken *Tok) {
+      return Tok && Tok->startsDesignatedInitializerList();
+    };
+    if (IsDesignatedList(&Right) ||
+        IsDesignatedList(Right.getPreviousNonComment()) ||
+        (Right.isOneOf(TT_DesignatedInitializerPeriod,
+                       TT_DesignatedInitializerLSquare) &&
+         Right.getPreviousNonComment() &&
+         Right.getPreviousNonComment()->is(tok::comma)) ||
+        (Right.is(tok::r_brace) && IsDesignatedList(Right.MatchingParen)))
+      return true;
+  }
   // On-type editors may apply only in-range edits. Keep a multiline lambda's
   // brace/body breaks together unless its enclosing statement is fully covered.
   if (Style.BraceWrapping.BeforeLambdaBody && !Line.AllTokensAffected) {

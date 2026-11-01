@@ -1379,6 +1379,8 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("BitFieldColonSpacing", Style.BitFieldColonSpacing);
     IO.mapOptional("BracedInitializerIndentWidth",
                    Style.BracedInitializerIndentWidth);
+    IO.mapOptional("BreakDesignatedInitializers",
+                   Style.BreakDesignatedInitializers);
     IO.mapOptional("BraceWrapping", Style.BraceWrapping);
     IO.mapOptional("BreakAdjacentStringLiterals",
                    Style.BreakAdjacentStringLiterals);
@@ -1968,6 +1970,7 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.BinPackLongBracedList = true;
   LLVMStyle.BitFieldColonSpacing = FormatStyle::BFCS_Both;
   LLVMStyle.BracedInitializerIndentWidth = -1;
+  LLVMStyle.BreakDesignatedInitializers = false;
   LLVMStyle.BraceWrapping = {/*AfterCaseLabel=*/false,
                              /*AfterClass=*/false,
                              /*AfterControlStatement=*/FormatStyle::BWACS_Never,

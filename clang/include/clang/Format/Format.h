@@ -1457,6 +1457,17 @@ struct FormatStyle {
   /// \version 17
   int BracedInitializerIndentWidth;
 
+  /// Put designated initializer braces and each member on separate lines.
+  /// \code
+  ///   T value
+  ///   {
+  ///     .a = 1,
+  ///     .b = 2
+  ///   };
+  /// \endcode
+  /// \version 23
+  bool BreakDesignatedInitializers;
+
   /// Different ways to wrap braces after control statements.
   enum BraceWrappingAfterControlStatementStyle : int8_t {
     /// Never wrap braces after a control statement.
@@ -6372,6 +6383,7 @@ struct FormatStyle {
            BinPackLongBracedList == R.BinPackLongBracedList &&
            BitFieldColonSpacing == R.BitFieldColonSpacing &&
            BracedInitializerIndentWidth == R.BracedInitializerIndentWidth &&
+           BreakDesignatedInitializers == R.BreakDesignatedInitializers &&
            BreakAdjacentStringLiterals == R.BreakAdjacentStringLiterals &&
            BreakAfterAttributes == R.BreakAfterAttributes &&
            BreakAfterJavaFieldAnnotations == R.BreakAfterJavaFieldAnnotations &&

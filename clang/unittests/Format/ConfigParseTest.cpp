@@ -245,6 +245,7 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   FormatStyle Style = {};
   Style.Language = FormatStyle::LK_Cpp;
   CHECK_PARSE_BOOL(BreakAfterConcept);
+  CHECK_PARSE_BOOL(BreakDesignatedInitializers);
   CHECK_PARSE_BOOL(BreakBeforeRequiresExpression);
   CHECK_PARSE_BOOL(AllowAllArgumentsOnNextLine);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);

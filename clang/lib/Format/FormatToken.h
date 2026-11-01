@@ -904,6 +904,13 @@ public:
     return Tok;
   }
 
+  bool startsDesignatedInitializerList() const {
+    const auto *First = getNextNonComment();
+    return is(tok::l_brace) && is(BK_BracedInit) && First &&
+           First->isOneOf(TT_DesignatedInitializerPeriod,
+                          TT_DesignatedInitializerLSquare);
+  }
+
   /// Returns \c true if this token likely names an object-like macro.
   ///
   /// If \p AllowFollowingColonColon is \c true, a following \c :: does not
